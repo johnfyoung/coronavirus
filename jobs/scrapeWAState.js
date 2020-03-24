@@ -1,6 +1,6 @@
 import { statsController } from "../controllers";
 import mongoose from "mongoose";
-import { dbg } from "../util/tools";
+import { dbg, logJob } from "../util/tools";
 
 require("dotenv").config();
 
@@ -13,7 +13,9 @@ mongoose
   .then(async () => {
     dbg("MongoDB connected");
     await statsController.scrapeWAState();
-    mongoose.disconnect();
-    process.exit();
+    logJob("Job completed: scrapeWAState").then(() => {
+      mongoose.disconnect();
+      process.exit();
+    });
   })
   .catch(err => console.log(err));
