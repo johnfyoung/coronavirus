@@ -3,7 +3,7 @@ import puppeteer from "puppeteer";
 import cheerio from "cheerio";
 import moment from "moment";
 
-import { logError } from "../tools";
+import { logError, dbg } from "../tools";
 
 const remoteURL = "https://www.doh.wa.gov/Emergencies/Coronavirus";
 
@@ -29,10 +29,17 @@ export default async () => {
     const tables = $("table");
 
     // parse the last updated date time
-    let updatedRaw = $(tables[0])
-      .prev()
-      .find("em")
-      .html();
+    let updatedRaw = null;
+    $("em").each(function() {
+      if (
+        $(this)
+          .html()
+          .includes("Updated")
+      ) {
+        updatedRaw = $(this).html();
+      }
+    });
+
     updatedRaw = updatedRaw
       .substr(11)
       .replace("at&#xA0;", "")
