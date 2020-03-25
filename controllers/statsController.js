@@ -1,6 +1,7 @@
 import { dataPullNames } from "../config";
-import { dbg, logError } from "../util/tools";
-import wastate from "../util/apis/scrape-state";
+import { logError } from "../util/tools";
+import scraperWAState from "../util/apis/scrape-state";
+import apiCoronaVirus from "../util/apis/api-corona";
 import {
   CasesByCounty,
   CasesByAge,
@@ -10,14 +11,22 @@ import {
 } from "../models";
 
 export const statsController = {
+  casesByCountry: async () => {
+    let result = null;
+    try {
+      result = await apiCoronaVirus.casesByCountry();
+    } catch (err) {
+      logError(`Error getting cases by country: ${err}`);
+    }
+
+    return result;
+  },
   scrapeWAState: async () => {
     let result = null;
     try {
-      result = await wastate();
+      result = await scraperWAState();
 
       if (await DataPull.isNew(result.lastUpdated, dataPullNames.WASTATE)) {
-        dbg("Create a new dataPull");
-
         const newDataPull = new DataPull({
           name: dataPullNames.WASTATE,
           pullTime: result.lastUpdated
@@ -28,8 +37,6 @@ export const statsController = {
             logError(`Error saving DataPull: ${err}`);
           }
         });
-
-        dbg("New datapull", newDataPull);
 
         await CasesByCounty.saveDataPull(
           result.tables[0].rows,
@@ -56,7 +63,10 @@ export const statsController = {
         );
       }
     } catch (err) {
-      logError("Error access api", err);
+      logError(
+        "statsController::scrapeWAState::Error scraping WA State COVID Data",
+        err
+      );
     }
 
     return result;
