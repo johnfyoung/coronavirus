@@ -31,6 +31,21 @@ casesByCountySchema.statics.saveDataPull = function(rows, dt, dPull) {
   });
 };
 
+casesByCountySchema.statics.getByDataPulls = function(dataPulls = null) {
+  if (!dataPulls) {
+    logError("CasesByCounty::getByDataPulls::Missing dataPulls list");
+    return;
+  }
+
+  return this.aggregate([
+    {
+      $match: {
+        dataPull: { $in: dataPulls }
+      }
+    }
+  ]);
+};
+
 export const CasesByCounty = mongoose.model(
   "casesByCounty",
   casesByCountySchema

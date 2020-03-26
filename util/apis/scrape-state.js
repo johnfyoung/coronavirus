@@ -12,7 +12,7 @@ export default async () => {
   try {
     const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 926 });
+    await page.setCacheEnabled(false);
     await page.goto(remoteURL);
     await page.waitForSelector(".contentmain");
 
@@ -30,24 +30,28 @@ export default async () => {
 
     // parse the last updated date time
     let updatedRaw = null;
-    $("em").each(function() {
-      if (
-        $(this)
-          .html()
-          .includes("Updated")
-      ) {
-        updatedRaw = $(this).html();
-      }
-    });
-
+    $("em")
+      .not("caption em")
+      .each(function() {
+        if (
+          $(this)
+            .html()
+            .includes("Updated")
+        ) {
+          updatedRaw = $(this).html();
+        }
+      });
+    dbg("rawdate", updatedRaw);
     updatedRaw = updatedRaw
       .substr(11)
       .replace("at&#xA0;", "")
       .replace("p.m.", "pm")
       .replace("a.m", "am");
+    dbg("unformatted date", updatedRaw);
     const updatedFormatted = moment(updatedRaw, "MMMM D, YYYY h:mm a").format(
       "YYYY-MM-DDTHH:mm:ss.000Z"
     );
+    dbg("formatted date", updatedFormatted);
     scrapedData.lastUpdated = updatedFormatted;
 
     // parse each of the data tables
