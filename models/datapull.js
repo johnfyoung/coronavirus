@@ -9,7 +9,12 @@ const dataPullSchema = new Schema({
 // check to see if the suplied dt is newer then the most recent datapull
 dataPullSchema.statics.isNew = async function(dt, name) {
   const dataPull = await this.findLatest(name);
-  dbg(`comparing ${dataPull.pullTime} and ${dt}`);
+  if (isEmpty(dataPull)) {
+    dbg(`comparing ${dataPull} and ${dt}`);
+  } else {
+    dbg(`comparing ${dataPull.pullTime} and ${dt}`);
+  }
+
   if (isEmpty(dataPull) || isABefore(dataPull.pullTime, dt)) {
     dbg("Got a new datapull!");
     return true;

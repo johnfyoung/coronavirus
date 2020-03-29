@@ -7,3 +7,4 @@ export * from "./casesByAge";
 export * from "./casesByCounty";
 export * from "./casesByPosNeg";
 export * from "./casesBySex";
+export * from "./casesByRegion";

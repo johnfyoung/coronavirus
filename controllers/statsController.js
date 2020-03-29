@@ -3,15 +3,20 @@ import { logError, dbg } from "../util/tools";
 import scraperWAState from "../util/apis/scrape-state";
 import apiCoronaVirus from "../util/apis/api-corona";
 import {
+  johnsHopkinsRetrieveData,
+  johnsHopkinsGetLatestUpdateTime
+} from "../util/apis/file-johnsHopkins";
+import {
   CasesByCounty,
   CasesByAge,
   CasesByPosNeg,
   CasesBySex,
-  DataPull
+  DataPull,
+  CasesByRegion
 } from "../models";
 
 export const statsController = {
-  casesByCountry: async () => {
+  getCasesByCountry: async () => {
     let result = null;
     try {
       result = await apiCoronaVirus.casesByCountry();
@@ -109,6 +114,37 @@ export const statsController = {
     } catch (err) {
       logError(
         `statsController::getWAStateByDate::Error aggregating data ${err}`
+      );
+    }
+
+    return result;
+  },
+  retrieveJohnsHopkins: async () => {
+    const lastUpdated = await johnsHopkinsGetLatestUpdateTime();
+    let result = null;
+    try {
+      if (
+        lastUpdated &&
+        (await DataPull.isNew(lastUpdated, dataPullNames.JOHNSHOPKINS))
+      ) {
+        result = await johnsHopkinsRetrieveData();
+
+        const newDataPull = new DataPull({
+          name: dataPullNames.JOHNSHOPKINS,
+          pullTime: lastUpdated
+        });
+
+        await newDataPull.save(function(err) {
+          if (err) {
+            logError(`Error saving DataPull: ${err}`);
+          }
+        });
+
+        await CasesByRegion.updateFromDataPull(result);
+      }
+    } catch (err) {
+      logError(
+        `statsController::retrieveJohnsHopkins: Could not retrieve the files from Johns Hopkins - ${err}`
       );
     }
 

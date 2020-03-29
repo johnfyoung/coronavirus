@@ -31,7 +31,8 @@ export const jwtCookies = {
 };
 
 export const dataPullNames = {
-  WASTATE: "wastate"
+  WASTATE: "wastate",
+  JOHNSHOPKINS: "johnshopkins"
 };
 
 export const fieldNamesByCounty = {
@@ -56,4 +57,11 @@ export const fieldNamesBySex = {
   SEX: "Sex at Birth",
   PCTCASES: "Percent of Cases",
   PCTDEATHS: "Percent of Deaths"
+};
+
+export const fieldNamesByRegion = {
+  PROVINCE: "Province/State",
+  COUNTRY: "Country/Region",
+  LATITUDE: "Lat",
+  LONGITUDE: "Long"
 };

@@ -48,4 +48,19 @@ router.get("/wa-state/scrape", async (req, res) => {
   }
 });
 
+router.get("/johnshopkins/retrieve", async (req, res) => {
+  try {
+    const result = await statsController.retrieveJohnsHopkins();
+
+    if (result) {
+      res.json(result);
+    } else {
+      res.status(500).send("Unexpected failure gathering data");
+    }
+  } catch (err) {
+    logError(`routes::api::stats::johnshopkins::retrieve: Error - ${err}`);
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
 export default router;
