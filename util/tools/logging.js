@@ -60,9 +60,10 @@ const jobLogger = createLogger({
   ]
 });
 
-export const logJob = async message => {
+export const logJob = async (message, jobName) => {
   await jobLogger.info(message, {
     metadata: {
+      jobName,
       time: new Date()
     }
   });

@@ -12,8 +12,8 @@ mongoose
   })
   .then(async () => {
     dbg("MongoDB connected");
-    await statsController.retrieveJohnsHopkins();
-    logJob("Job completed: retrieveJohnsHopkins").then(() => {
+    const result = await statsController.retrieveJohnsHopkins();
+    logJob(`Job completed: ${result ? "got new data" : "no new data"}`, "retrieveJohnsHopkins").then(() => {
       mongoose.disconnect();
       process.exit();
     });
