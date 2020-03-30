@@ -38,6 +38,18 @@ router.get("/wa-state/cases-by-county/:countyName?", async (req, res) => {
   }
 });
 
+router.get("/intl/cases-by-region/:regionName?", async (req, res) => {
+  const result = await statsController.getCasesByRegion(
+    req.params.regionName
+  );
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
 router.get("/wa-state/scrape", async (req, res) => {
   const result = await statsController.scrapeWAState();
 

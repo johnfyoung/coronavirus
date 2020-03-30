@@ -37,7 +37,7 @@ export const statsController = {
           pullTime: result.lastUpdated
         });
 
-        await newDataPull.save(function(err) {
+        await newDataPull.save(function (err) {
           if (err) {
             logError(`Error saving DataPull: ${err}`);
           }
@@ -102,6 +102,21 @@ export const statsController = {
 
     return null;
   },
+  getCasesByRegion: async (regionName = null) => {
+    const countryFilter = regionName ? { country: regionName } : {};
+    try {
+      return await CasesByRegion.aggregate([
+        { $match: countryFilter },
+        { $sort: { country: 1 } }
+      ]);
+    } catch (err) {
+      logError(
+        `statsController::getCasesByRegion::Error aggregating data ${err}`
+      );
+    }
+
+    return null;
+  },
   getWAStateByDate: async (date = null) => {
     let result = null;
     try {
@@ -134,7 +149,7 @@ export const statsController = {
           pullTime: lastUpdated
         });
 
-        await newDataPull.save(function(err) {
+        await newDataPull.save(function (err) {
           if (err) {
             logError(`Error saving DataPull: ${err}`);
           }
