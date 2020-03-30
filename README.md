@@ -24,6 +24,9 @@ This is a MERN app boilerplate.
 - set `MONGODB_URI` to the URI of your Mongo database
 - set `SECRETKEY` to a random, 32 character string
 - set `COOKIE_SECURE` to `false` for development, `true` for production
+- set `RAPIDAPI_APP_KEY` to an app at Rapid API
+- set `GITHUB_ACCESS_TOKEN` to an app token you create at GitHub
+- set `REACT_APP_NAME` to "Coronavirus Dashboard"
 
 ## For Heroku deployment
 
