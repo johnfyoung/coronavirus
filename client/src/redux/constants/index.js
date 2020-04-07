@@ -4,3 +4,4 @@ export * from "./nav.constants";
 export * from "./users.constants";
 export * from "./service.constants";
 export * from "./install.constants";
+export * from "./stats.constants";
