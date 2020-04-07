@@ -47,7 +47,7 @@ class HomePage extends Component {
 
   formatData = (data) => {
     const reformattedData = [];
-    dbg("data to be formatted", data);
+    dbg.log("data to be formatted", data);
     Object.keys(data.casesByDate[0]).forEach(date => {
       let row = {};
       row.name = moment(date, "YYYYMMDD").format("MMM-DD");

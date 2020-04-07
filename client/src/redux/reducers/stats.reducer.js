@@ -30,7 +30,7 @@ export const stats = function (state = initialState, action) {
             return {
                 ...state,
                 lastUpdated: action.payload
-            }
+            };
         default:
             return state;
     }

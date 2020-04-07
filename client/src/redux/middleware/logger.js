@@ -1,5 +1,5 @@
 import { serviceConstants } from "../constants";
-import { dbg, dbgGroup, dbgGroupEnd } from "../../utils";
+import { dbg } from "../../utils";
 import { logServices } from "../../services";
 
 /**
@@ -7,12 +7,11 @@ import { logServices } from "../../services";
  * @param {Object} store
  */
 export const logger = store => next => action => {
-  dbgGroup(action.type);
-  dbg("The action: ", action);
+  dbg.group(action.type);
+  dbg.log("The action: ", action);
   const returnValue = next(action);
-  dbg("The new state", store.getState());
-  dbgGroupEnd();
-
+  dbg.log("The new state", store.getState());
+  dbg.groupEnd();
   return returnValue;
 };
 

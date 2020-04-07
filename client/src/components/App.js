@@ -31,22 +31,22 @@ import NotFoundPage from "./connected/pages/NotFound";
 
 class App extends Component {
   componentDidMount = () => {
-    dbg("App::componentDidMount props", this.props);
-    dbg("App::componentDidMount history post App mount", history);
+    dbg.log("App::componentDidMount props", this.props);
+    dbg.log("App::componentDidMount history post App mount", history);
     //this.props.announce("Here is a site wide announcement");
 
     this.props.getLastUpdated().then(() => {
       this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
     });
 
-    dbg("Author:", process.env.REACT_APP_AUTHOR);
+    dbg.log("Author:", process.env.REACT_APP_AUTHOR);
     history.listen(this.handleLocationChange);
 
     this.handleLocationChange(history.location, "PUSH");
   };
 
   handleLocationChange = (location, action) => {
-    dbg("App::handleLocationChange Changing location app", location);
+    dbg.log("App::handleLocationChange Changing location app", location);
     const { nav, locationChange, clearAlert, captureUserEvent } = this.props;
 
     captureUserEvent({ type: "navigation", path: location.pathname });
