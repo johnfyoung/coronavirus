@@ -5,11 +5,18 @@ import ConnectedPage from "../../connected/templates/ConnectedPage";
 import { dbg } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
+
+import moment from "moment";
+
 class HomePage extends Component {
   state = {
     states: [],
     counties: [],
-    cases: {}
+    data: [],
+    dataMax: 0
   }
 
   componentDidMount() {
@@ -33,10 +40,25 @@ class HomePage extends Component {
     this.props.selectCounty(ev.target.value);
     this.props.getCasesByCounty(currentState, ev.target.value).then(data => {
       if (data.length > 0) {
-        this.setState({ cases: data[0] })
+        this.setState({ data: this.formatData(data[0]) })
       }
     });
   }
+
+  formatData = (data) => {
+    const reformattedData = [];
+    dbg("data to be formatted", data);
+    Object.keys(data.casesByDate[0]).forEach(date => {
+      let row = {};
+      row.name = moment(date, "YYYYMMDD").format("MMM-DD");
+      row.cases = parseInt(data.casesByDate[0][date]);
+      row.deaths = parseInt(data.deathsByDate[0][date]);
+
+      reformattedData.push(row);
+    });
+
+    return reformattedData;
+  };
 
   render() {
     const { currentCounty, currentState } = this.props.stats;
@@ -70,8 +92,22 @@ class HomePage extends Component {
               ) : ""}
               {currentCounty ? (
                 <div>
-                  Got a county: {currentCounty}
-                  <pre>{JSON.stringify(this.state.cases, null, 2)}</pre>
+                  <ResponsiveContainer width="100%" height={500}>
+                    <LineChart
+                      data={this.state.data}
+                      margin={{
+                        top: 5, right: 30, left: 20, bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis type="number" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="cases" stroke="#8884d8" activeDot={{ r: 8 }} />
+                      <Line type="monotone" dataKey="deaths" stroke="#82ca9d" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               ) : ""}
 
