@@ -1,6 +1,6 @@
 import { statsConstants } from "../constants";
 
-const initialState = { currentState: "", currentCounty: "" };
+const initialState = { currentState: "", currentCounty: "", lastUpdated: "" };
 
 export const stats = function (state = initialState, action) {
     switch (action.type) {
@@ -26,6 +26,11 @@ export const stats = function (state = initialState, action) {
                 ...state,
                 currentCounty: action.payload
             };
+        case statsConstants.STATS_GET_LASTUPDATED:
+            return {
+                ...state,
+                lastUpdated: action.payload
+            }
         default:
             return state;
     }

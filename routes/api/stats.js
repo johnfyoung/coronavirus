@@ -1,10 +1,23 @@
 import express from "express";
-//import { dataPullNames } from "../../config";
+import { dataPullNames } from "../../config";
 import { dbg, logError } from "../../util/tools";
 
 import { statsController } from "../../controllers";
 
 const router = express.Router();
+
+router.get("/us/last-updated", async (req, res) => {
+  try {
+    const result = await statsController.getLatestDataDump(dataPullNames.JOHNSHOPKINS);
+    if (result) {
+      res.json(result);
+    } else {
+      res.status(204).send("No updates in the system");
+    }
+  } catch (err) {
+    res.status(500).send("Unexpected failure getting last update time");
+  }
+});
 
 router.get("/us/cases-by-state/:stateName?", async (req, res) => {
   const result = await statsController.getCasesByState(

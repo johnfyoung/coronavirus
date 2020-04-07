@@ -93,6 +93,9 @@ export const statsController = {
 
     return null;
   },
+  getLatestDataDump: async (dumpName) => {
+    return await DataPull.findLatest(dumpName);
+  },
   retrieveJohnsHopkins: async () => {
     const lastUpdated = await johnsHopkinsGetLatestUpdateTime();
     let result = {

@@ -2,13 +2,16 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Router } from "react-router-dom";
 
+import moment from "moment";
+
 import { dbg, history } from "../utils";
 
 import {
   alertActions,
   navActions,
   installActions,
-  logActions
+  logActions,
+  statsActions
 } from "../redux/actions";
 
 import Header from "../components/presentation/parts/Header";
@@ -30,8 +33,13 @@ class App extends Component {
   componentDidMount = () => {
     dbg("App::componentDidMount props", this.props);
     dbg("App::componentDidMount history post App mount", history);
-    this.props.announce("Here is a site wide announcement");
+    //this.props.announce("Here is a site wide announcement");
 
+    this.props.getLastUpdated().then(() => {
+      this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
+    });
+
+    dbg("Author:", process.env.REACT_APP_AUTHOR);
     history.listen(this.handleLocationChange);
 
     this.handleLocationChange(history.location, "PUSH");
@@ -125,12 +133,13 @@ class App extends Component {
   }
 }
 
-const mapStateToProps = ({ alert, auth, nav }) => {
+const mapStateToProps = ({ alert, auth, nav, stats }) => {
   return {
     isAuthd: auth.authenticated,
     announcement: alert.announcement,
     nav,
-    appName: nav.brand.label
+    appName: nav.brand.label,
+    statsLastUpdated: stats.lastUpdated
   };
 };
 
@@ -140,7 +149,8 @@ const actionCreators = {
   locationChange: navActions.locationChanged,
   errorAlert: alertActions.error,
   checkInstallation: installActions.checkInstallation,
-  captureUserEvent: logActions.captureUserEvent
+  captureUserEvent: logActions.captureUserEvent,
+  getLastUpdated: statsActions.getLastUpdated
 };
 
 const ConnectedApp = connect(mapStateToProps, actionCreators)(App);

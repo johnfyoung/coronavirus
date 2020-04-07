@@ -10,9 +10,13 @@ const getStates = () => {
             .getStates()
             .then(data => {
                 dispatch({ type: serviceConstants.POSTBACK_END });
+                dispatch({ type: statsConstants.STATS_SUCCESS });
                 return data;
             }).catch(err => {
                 dispatch({ type: serviceConstants.POSTBACK_ERROR });
+                dispatch({ type: statsConstants.STATS_FAILURE });
+            }).finally(() => {
+                dispatch({ type: serviceConstants.POSTBACK_END });
             });
     }
 }
@@ -26,11 +30,15 @@ const getCounties = (stateName) => {
             .getCounties(stateName)
             .then(data => {
                 dispatch({ type: serviceConstants.POSTBACK_END });
+                dispatch({ type: statsConstants.STATS_SUCCESS });
                 return data;
             })
             .catch(err => {
                 dispatch({ type: serviceConstants.POSTBACK_ERROR });
-            })
+                dispatch({ type: statsConstants.STATS_FAILURE });
+            }).finally(() => {
+                dispatch({ type: serviceConstants.POSTBACK_END });
+            });
     }
 }
 
@@ -43,11 +51,31 @@ const getCasesByCounty = (stateName, countyName) => {
             .getCasesByCounty(stateName, countyName)
             .then(data => {
                 dispatch({ type: serviceConstants.POSTBACK_END });
+                dispatch({ type: statsConstants.STATS_SUCCESS });
                 return data;
             })
             .catch(err => {
                 dispatch({ type: serviceConstants.POSTBACK_ERROR });
-            })
+                dispatch({ type: statsConstants.STATS_FAILURE });
+            }).finally(() => {
+                dispatch({ type: serviceConstants.POSTBACK_END });
+            });
+    }
+}
+
+const getLastUpdated = () => {
+    return dispatch => {
+        dispatch({ type: serviceConstants.POSTBACK_BEGIN });
+
+        return statsServices.getLastUpdated().then(data => {
+            dispatch({ type: statsConstants.STATS_GET_LASTUPDATED, payload: data });
+            dispatch({ type: statsConstants.STATS_SUCCESS });
+        }).catch(err => {
+            dispatch({ type: statsConstants.STATS_FAILURE });
+            dispatch({ type: serviceConstants.POSTBACK_ERROR });
+        }).finally(() => {
+            dispatch({ type: serviceConstants.POSTBACK_END });
+        });;
     }
 }
 
@@ -68,5 +96,6 @@ export const statsActions = {
     getCounties,
     selectState,
     selectCounty,
-    getCasesByCounty
+    getCasesByCounty,
+    getLastUpdated
 };

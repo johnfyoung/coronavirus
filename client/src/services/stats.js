@@ -46,8 +46,23 @@ const getCasesByCounty = (stateName, countyName) => {
     })
 }
 
+const getLastUpdated = () => {
+    return axios.get("/api/stats/us/last-updated").then(res => {
+        dbg("statsServices::getLastUpdated response", res);
+        if (res.status === 200) {
+            return res.data.pullTime;
+        }
+    }).catch(error => {
+        dbg("statsServices::getLastUpdated error", error);
+        const err = Error("Stats error");
+        err.data = error.response.data;
+        throw err;
+    });
+};
+
 export const statsServices = {
     getStates,
     getCounties,
-    getCasesByCounty
+    getCasesByCounty,
+    getLastUpdated
 }
