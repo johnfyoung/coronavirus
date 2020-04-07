@@ -43,6 +43,16 @@ router.get("/us/county-list/:stateName?", async (req, res) => {
   }
 });
 
+router.get("/us/state-list", async (req, res) => {
+  const result = await statsController.getStateList();
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
 router.get("/intl/cases-by-region/:regionName?", async (req, res) => {
   const result = await statsController.getCasesByRegion(
     req.params.regionName

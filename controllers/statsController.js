@@ -67,6 +67,17 @@ export const statsController = {
 
     return null;
   },
+  getStateList: async () => {
+    try {
+      return await CasesByCounty.distinct("state");
+    } catch (err) {
+      logError(
+        `statsController::getCountyList::Error aggregating data ${err}`
+      );
+    }
+
+    return null;
+  },
   getCasesByState: async (stateName = null) => {
     const filter = stateName ? { state: stateName } : {};
     try {
