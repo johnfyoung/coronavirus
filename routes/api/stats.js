@@ -6,29 +6,34 @@ import { statsController } from "../../controllers";
 
 const router = express.Router();
 
-router.get("/cases-by-country", async (req, res) => {
-  const result = statsController.casesByCountry();
-  if (result) {
-    res.json(result);
-    return;
-  }
-
-  res.status(500).send("Unexpected failure gathering data");
-});
-
-router.get("/wa-state/cases-by-date/:date?", async (req, res) => {
-  const result = await statsController.getWAStateByDate(req.params.date);
+router.get("/us/cases-by-state/:stateName?", async (req, res) => {
+  const result = await statsController.getCasesByState(
+    req.params.stateName
+  );
 
   if (result) {
     res.json(result);
   } else {
-    res.status(404).send("No datapulls on that date");
+    res.status(500).send("Unexpected failure gathering data");
   }
 });
 
-router.get("/wa-state/cases-by-county/:countyName?", async (req, res) => {
-  const result = await statsController.getWAStateByCounty(
+router.get("/us/cases-by-county/:stateName/:countyName?", async (req, res) => {
+  const result = await statsController.getCasesByCounty(
+    req.params.stateName,
     req.params.countyName
+  );
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
+router.get("/us/county-list/:stateName?", async (req, res) => {
+  const result = await statsController.getCountyList(
+    req.params.stateName
   );
 
   if (result) {
@@ -50,24 +55,16 @@ router.get("/intl/cases-by-region/:regionName?", async (req, res) => {
   }
 });
 
-router.get("/wa-state/scrape", async (req, res) => {
-  const result = await statsController.scrapeWAState();
-
-  if (result) {
-    res.json(result);
-  } else {
-    res.status(500).send("Unexpected failure gathering data");
-  }
-});
-
 router.get("/johnshopkins/retrieve", async (req, res) => {
   try {
     const result = await statsController.retrieveJohnsHopkins();
 
-    if (result) {
+    if (result && result.meta.status) {
       res.json(result);
     } else {
-      res.status(500).send("Unexpected failure gathering data");
+      if (result && result.meta.status === 0) {
+        res.status(204).send(result.meta.message);
+      }
     }
   } catch (err) {
     logError(`routes::api::stats::johnshopkins::retrieve: Error - ${err}`);

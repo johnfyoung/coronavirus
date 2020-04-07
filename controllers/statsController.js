@@ -1,107 +1,25 @@
 import { dataPullNames } from "../config";
 import { logError, dbg } from "../util/tools";
-import scraperWAState from "../util/apis/scrape-state";
-import apiCoronaVirus from "../util/apis/api-corona";
+
 import {
   johnsHopkinsRetrieveData,
   johnsHopkinsGetLatestUpdateTime
 } from "../util/apis/file-johnsHopkins";
 import {
   CasesByCounty,
-  CasesByAge,
-  CasesByPosNeg,
-  CasesBySex,
   DataPull,
   CasesByRegion
 } from "../models";
 
 export const statsController = {
-  getCasesByCountry: async () => {
-    let result = null;
-    try {
-      result = await apiCoronaVirus.casesByCountry();
-    } catch (err) {
-      logError(`Error getting cases by country: ${err}`);
-    }
-
-    return result;
-  },
-  scrapeWAState: async () => {
-    let result = null;
-    try {
-      result = await scraperWAState();
-
-      if (await DataPull.isNew(result.lastUpdated, dataPullNames.WASTATE)) {
-        const newDataPull = new DataPull({
-          name: dataPullNames.WASTATE,
-          pullTime: result.lastUpdated
-        });
-
-        await newDataPull.save(function (err) {
-          if (err) {
-            logError(`Error saving DataPull: ${err}`);
-          }
-        });
-
-        await CasesByCounty.saveDataPull(
-          result.tables[0].rows,
-          result.lastUpdated,
-          newDataPull
-        );
-
-        await CasesByPosNeg.saveCases(
-          result.tables[1],
-          result.lastUpdated,
-          newDataPull
-        );
-
-        await CasesByAge.saveCases(
-          result.tables[2],
-          result.lastUpdated,
-          newDataPull
-        );
-
-        await CasesBySex.saveCases(
-          result.tables[3],
-          result.lastUpdated,
-          newDataPull
-        );
-      }
-    } catch (err) {
-      logError(
-        `statsController::scrapeWAState::Error scraping WA State COVID Data: ${err}`
-      );
-    }
-
-    return result;
-  },
-  getWAStateByCounty: async (countyName = null) => {
-    const countyFilter = countyName ? { county: countyName } : {};
-    try {
-      return await CasesByCounty.aggregate([
-        { $match: countyFilter },
-        { $sort: { updateTime: 1 } },
-        {
-          $group: {
-            _id: "$county",
-            data: {
-              $push: {
-                cases: "$cases",
-                deaths: "$deaths",
-                updateTime: "$updateTime"
-              }
-            }
-          }
-        }
-      ]);
-    } catch (err) {
-      logError(
-        `statsController::getWAStateByCounty::Error aggregating data ${err}`
-      );
-    }
-
-    return null;
-  },
+  // DEPRECATED: the RapidApi one didn't ave the
+  // getCasesByCountry: async () => {
+  //   let result = null;
+  //   try {
+  //     result = await apiCoronaVirus.casesByCountry();
+  //   } catch (err) {
+  //     logError(`Error getting cases by country: ${err}`);
+  //   }
   getCasesByRegion: async (regionName = null) => {
     const countryFilter = regionName ? { country: regionName } : {};
     try {
@@ -117,32 +35,72 @@ export const statsController = {
 
     return null;
   },
-  getWAStateByDate: async (date = null) => {
-    let result = null;
+  getCasesByCounty: async (stateName = null, countyName = null) => {
+    let filter = stateName ? { state: { $regex: stateName, $options: "i" } } : {};
+    filter = countyName ? { ...filter, county: { $regex: countyName, $options: "i" } } : filter;
     try {
-      const dataPullSet = await DataPull.findByDate("wastate", date);
-      dbg("Find DataPull by date", dataPullSet[0]);
-
-      if (Array.isArray(dataPullSet) && dataPullSet.length === 1) {
-        result = CasesByCounty.getByDataPulls(dataPullSet[0].dataPulls);
-      }
+      return await CasesByCounty.aggregate([
+        { $match: filter },
+        { $sort: { state: 1, county: 1 } }
+      ]);
     } catch (err) {
       logError(
-        `statsController::getWAStateByDate::Error aggregating data ${err}`
+        `statsController::getCasesByCounty::Error aggregating data ${err}`
       );
     }
 
-    return result;
+    return null;
+  },
+  getCountyList: async (stateName = null) => {
+    const filter = stateName ? { state: { $regex: stateName, $options: "i" } } : {};
+    try {
+      return await CasesByCounty.aggregate([
+        { $match: filter },
+        { $sort: { state: 1, county: 1 } },
+        { $project: { county: true } }
+      ]);
+    } catch (err) {
+      logError(
+        `statsController::getCountyList::Error aggregating data ${err}`
+      );
+    }
+
+    return null;
+  },
+  getCasesByState: async (stateName = null) => {
+    const filter = stateName ? { state: stateName } : {};
+    try {
+      return await CasesByCounty.aggregate([
+        { $match: filter },
+        { $sort: { state: 1, county: 1 } }
+      ]);
+    } catch (err) {
+      logError(
+        `statsController::getCasesByState::Error aggregating data ${err}`
+      );
+    }
+
+    return null;
   },
   retrieveJohnsHopkins: async () => {
     const lastUpdated = await johnsHopkinsGetLatestUpdateTime();
-    let result = null;
+    let result = {
+      meta: {
+        status: 0,
+        message: "No new data"
+      }
+    };
     try {
       if (
         lastUpdated &&
         (await DataPull.isNew(lastUpdated, dataPullNames.JOHNSHOPKINS))
       ) {
-        result = await johnsHopkinsRetrieveData();
+        result.meta = {
+          status: 1,
+          message: "New data"
+        }
+
+        result.data = await johnsHopkinsRetrieveData();
 
         const newDataPull = new DataPull({
           name: dataPullNames.JOHNSHOPKINS,
@@ -155,7 +113,8 @@ export const statsController = {
           }
         });
 
-        await CasesByRegion.updateFromDataPull(result);
+        await CasesByRegion.updateFromDataPull(result.data.intl);
+        await CasesByCounty.updateFromDataPull(result.data.us, newDataPull);
       }
     } catch (err) {
       logError(

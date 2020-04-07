@@ -9,28 +9,37 @@ const csvRootPath =
 const githubAPIPath =
   "https://api.github.com/repos/CSSEGISandData/COVID-19/commits";
 
+// Filenames as they are in the github repo
 const remoteFiles = {
-  timeSeriesConfirmedCases: {
-    type: "cases",
-    path: "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+  intl: {
+    timeSeriesConfirmedCases: {
+      type: "cases",
+      path: "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+    },
+    timeSeriesDeaths: {
+      type: "deaths",
+      path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+    },
+    timeSeriesRecovered: {
+      type: "recovered",
+      path: "csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+    }
   },
-  timeSeriesDeaths: {
-    type: "deaths",
-    path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
-  },
-  timeSeriesRecovered: {
-    type: "recovered",
-    path: "csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+  us: {
+    timeSeriesConfirmedCases: {
+      type: "cases",
+      path: "csse_covid_19_time_series/time_series_covid19_confirmed_US.csv"
+    },
+    timeSeriesDeaths: {
+      type: "deaths",
+      path: "csse_covid_19_time_series/time_series_covid19_deaths_US.csv"
+    }
   }
 };
 
-// TODO:
-// - export the csv parse as its own function
-// - create a new function to test for updates
-// How to test for updates:
-// - retrieve the latest commit from github api here:
-//   https://api.github.com/repos/CSSEGISandData/COVID-19/commits
-
+/**
+ * Uses the GitHub API to get the latest commit time
+ */
 export const johnsHopkinsGetLatestUpdateTime = async () => {
   let commitDate = null;
 
@@ -53,27 +62,33 @@ export const johnsHopkinsGetLatestUpdateTime = async () => {
   return commitDate;
 };
 
+/**
+ * Uses the Github api to retrive each csv file - requires Github API access token
+ */
 export const johnsHopkinsRetrieveData = async () => {
   let result = {};
 
   try {
     for (const key of Object.keys(remoteFiles)) {
-      const response = await axios.get(
-        `${csvRootPath}${remoteFiles[key].path}`,
-        {
-          headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN }
-        }
-      );
+      result[key] = {};
+      for (const filename of Object.keys(remoteFiles[key])) {
+        const response = await axios.get(
+          `${csvRootPath}${remoteFiles[key][filename].path}`,
+          {
+            headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN }
+          }
+        );
 
-      const buffer = new Buffer(response.data.content, response.data.encoding);
-      result[key] = {
-        type: remoteFiles[key].type
-      };
-      result[key].data = await csvParse.parse(buffer.toString());
+        const buffer = new Buffer(response.data.content, response.data.encoding);
+        result[key][filename] = {
+          type: remoteFiles[key][filename].type
+        };
+        result[key][filename].data = await csvParse.parse(buffer.toString());
+      }
     }
   } catch (err) {
     logError(
-      `file-johnHopkins::Error retrieving data from Johns Hopkins: ${err}`
+      `file-johnHopkins::johnsHopkinsRetrieveData::Error retrieving data from Johns Hopkins: ${err}`
     );
   }
 

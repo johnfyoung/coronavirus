@@ -13,12 +13,12 @@ const casesByRegionSchema = new Schema({
   recoveredByDate: Array
 });
 
-const makeUniqueKey = function(country, province) {
+const makeUniqueKey = function (country, province) {
   return `${country
     .toLowerCase()
     .replace(/[\s'()]/g, "")}_${province
-    .toLowerCase()
-    .replace(/[\s'()]/g, "")}`;
+      .toLowerCase()
+      .replace(/[\s'()]/g, "")}`;
 };
 
 casesByRegionSchema.statics.formatDataPull = dataObj => {
@@ -39,7 +39,10 @@ casesByRegionSchema.statics.formatDataPull = dataObj => {
       data[regionID][dataObj[key].type] = {};
       dates.forEach((d, i) => {
         const dateKey = moment(d, "M/D/YY").format("YYYYMMDD");
-        data[regionID][dataObj[key].type][dateKey] = dataByDate[i];
+
+        if (dateKey !== "Invalid Date") {
+          data[regionID][dataObj[key].type][dateKey] = dataByDate[i];
+        }
       });
     });
   }
@@ -47,7 +50,7 @@ casesByRegionSchema.statics.formatDataPull = dataObj => {
   return data;
 };
 
-casesByRegionSchema.statics.updateFromDataPull = function(dataObj) {
+casesByRegionSchema.statics.updateFromDataPull = function (dataObj) {
   const formattedData = this.formatDataPull(dataObj);
   try {
     Object.keys(formattedData).forEach(async key => {
