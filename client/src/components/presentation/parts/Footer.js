@@ -1,5 +1,8 @@
 import React from "react";
 
+require("dotenv").config();
+
 export default function Footer() {
-  return <footer className="footer-bottom">&copy; 2019 myapp</footer>;
+  const year = new Date().getFullYear();
+  return <footer className="footer-bottom">&copy; {year} {process.env.REACT_APP_AUTHOR}</footer>;
 }
