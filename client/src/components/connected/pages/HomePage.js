@@ -6,7 +6,7 @@ import { dbg } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
 
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush
 } from 'recharts';
 
 import moment from "moment";
@@ -51,13 +51,25 @@ class HomePage extends Component {
     Object.keys(data.casesByDate[0]).forEach(date => {
       let row = {};
       row.name = moment(date, "YYYYMMDD").format("MMM-DD");
-      row.cases = parseInt(data.casesByDate[0][date]);
-      row.deaths = parseInt(data.deathsByDate[0][date]);
+      row.casesCount = parseInt(data.casesByDate[0][date]["count"]);
+      row.casesRate = data.casesByDate[0][date]["rate"] && !Number.isNaN(data.casesByDate[0][date]["rate"]) && data.casesByDate[0][date]["rate"] >= 0 ? parseFloat(data.casesByDate[0][date]["rate"]) : 0;
+      row.casesHarm = data.casesByDate[0][date]["harm"] && !Number.isNaN(data.casesByDate[0][date]["harm"]) && data.casesByDate[0][date]["harm"] >= 0 ? parseFloat(data.casesByDate[0][date]["harm"]) : 0;
+      row.casesSMA = data.casesByDate[0][date]["sma"] && !Number.isNaN(data.casesByDate[0][date]["sma"]) && data.casesByDate[0][date]["sma"] >= 0 ? parseFloat(data.casesByDate[0][date]["sma"]) : 0;
+      row.casesMov = data.casesByDate[0][date]["movingAvg"] && !Number.isNaN(data.casesByDate[0][date]["movingAvg"]) && data.casesByDate[0][date]["movingAvg"] >= 0 ? parseFloat(data.casesByDate[0][date]["movingAvg"]) : 0;
+
+      row.deathsCount = parseInt(data.deathsByDate[0][date]["count"]);
+      row.deathsRate = data.deathsByDate[0][date]["rate"] && !Number.isNaN(data.deathsByDate[0][date]["rate"]) && data.deathsByDate[0][date]["rate"] >= 0 ? parseFloat(data.deathsByDate[0][date]["rate"]) : 0;
+      row.deathsHarm = data.deathsByDate[0][date]["harm"] && !Number.isNaN(data.deathsByDate[0][date]["harm"]) && data.deathsByDate[0][date]["harm"] >= 0 ? parseFloat(data.deathsByDate[0][date]["harm"]) : 0;
 
       reformattedData.push(row);
     });
 
     return reformattedData;
+  };
+
+  handleMouseOver = (target) => {
+    //dbg.log("Mouse Over Ev", ev);
+    target.stroke = "#885687";
   };
 
   render() {
@@ -92,6 +104,7 @@ class HomePage extends Component {
               ) : ""}
               {currentCounty ? (
                 <div>
+                  <h2>Cases rate of change</h2>
                   <ResponsiveContainer width="100%" height={500}>
                     <LineChart
                       data={this.state.data}
@@ -101,20 +114,41 @@ class HomePage extends Component {
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis type="number" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
+                      <YAxis type="number" yAxisId="left" orientation="left" domain={[0, .5]} allowDataOverflow={true} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="cases" stroke="#8884d8" activeDot={{ r: 8 }} />
-                      <Line type="monotone" dataKey="deaths" stroke="#82ca9d" />
+                      <Brush />
+                      <Line type="monotone" yAxisId="left" dataKey="casesHarm" stroke="#4db84d" activeDot={{ r: 8 }} />
+                      <Line type="monotone" yAxisId="left" dataKey="casesRate" stroke="#3546c4" activeDot={{ r: 8 }} />
+                      <Line type="monotone" yAxisId="left" dataKey="casesMov" stroke="#c4355d" activeDot={{ r: 8 }} />
                     </LineChart>
                   </ResponsiveContainer>
+
+                  <h2>Cases count</h2>
+                  <ResponsiveContainer width="100%" height={500}>
+                    <LineChart
+                      data={this.state.data}
+                      margin={{
+                        top: 5, right: 30, left: 20, bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis type="number" yAxisId="left" orientation="left" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" activeDot={{ r: 8 }} />
+                      <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <pre>{JSON.stringify(this.state.data, null, 2)}</pre>
                 </div>
               ) : ""}
 
             </form>
           </div>
         </div>
-      </ConnectedPage>
+      </ConnectedPage >
     );
   }
 
