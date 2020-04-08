@@ -13,7 +13,7 @@ mongoose
   .then(async () => {
     dbg("MongoDB connected");
     const result = await statsController.retrieveJohnsHopkins();
-    logJob(`Job completed: ${result ? "got new data" : "no new data"}`, "retrieveJohnsHopkins").then(() => {
+    logJob(`Job completed: ${result.meta.message}`, "retrieveJohnsHopkins").then(() => {
       mongoose.disconnect();
       process.exit();
     });

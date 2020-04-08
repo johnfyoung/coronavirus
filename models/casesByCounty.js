@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { fieldNamesByCounty } from "../config/constants";
-import { logError } from "../util/tools";
+import { logError, dbg } from "../util/tools";
 import moment from "moment";
 
 const casesByCountySchema = new Schema({
@@ -49,7 +49,11 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
         const dateKey = moment(d, "M/D/YY").format("YYYYMMDD");
 
         if (dateKey !== "Invalid date") {
-          data[regionID][dataObj[key].type][dateKey] = dataByDate[i];
+          let rate = 0;
+          if (dataByDate[i - 1]) {
+            rate = (dataByDate[i] - dataByDate[i - 1]) / dataByDate[i - 1];
+          };
+          data[regionID][dataObj[key].type][dateKey] = { count: dataByDate[i], rate };
         }
       });
     });
@@ -58,13 +62,16 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
   return data;
 };
 
-casesByCountySchema.statics.updateFromDataPull = function (dataObj, dPull) {
+casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull) {
+  dbg("Updating CasesByCounty");
   const formattedData = this.formatDataPull(dataObj);
   try {
-    Object.keys(formattedData).forEach(async key => {
+    await Promise.all(Object.keys(formattedData).map(async key => {
       let county = await CasesByCounty.findOne({ uniqueKey: key });
 
+      //dbg("County result", county);
       if (county) {
+        //dbg("Got a county!");
         county.casesByDate = formattedData[key].cases;
         county.deathsByDate = formattedData[key].deaths;
         county.dataPull = dPull;
@@ -84,7 +91,7 @@ casesByCountySchema.statics.updateFromDataPull = function (dataObj, dPull) {
       }
 
       return await county.save();
-    });
+    }));
   } catch (err) {
     logError(
       `CasesByCounty::updateFromDataPull::Error storing data from datapull = ${err}`
@@ -119,13 +126,15 @@ casesByCountySchema.statics.getByDataPulls = function (dataPulls = null) {
     return;
   }
 
-  return this.aggregate([
+  const result = this.aggregate([
     {
       $match: {
         dataPull: { $in: dataPulls }
       }
     }
   ]);
+
+  return this.populate(result, { path: "dataPull" });
 };
 
 export const CasesByCounty = mongoose.model(

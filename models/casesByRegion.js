@@ -50,10 +50,10 @@ casesByRegionSchema.statics.formatDataPull = dataObj => {
   return data;
 };
 
-casesByRegionSchema.statics.updateFromDataPull = function (dataObj) {
+casesByRegionSchema.statics.updateFromDataPull = async function (dataObj) {
   const formattedData = this.formatDataPull(dataObj);
   try {
-    Object.keys(formattedData).forEach(async key => {
+    await Promise.all(Object.keys(formattedData).map(async key => {
       let region = await CasesByRegion.findOne({ uniqueKey: key });
 
       if (region) {
@@ -74,7 +74,7 @@ casesByRegionSchema.statics.updateFromDataPull = function (dataObj) {
       }
 
       return await region.save();
-    });
+    }));
   } catch (err) {
     logError(
       `CasesByRegion::updateFromDataPull::Error storing data from datapull = ${err}`
