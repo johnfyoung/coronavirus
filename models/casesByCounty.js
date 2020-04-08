@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { fieldNamesByCounty } from "../config/constants";
 import { logError, dbg } from "../util/tools";
 import moment from "moment";
+import { harmonicMean } from "simple-statistics";
 
 const casesByCountySchema = new Schema({
   uniqueKey: String,
@@ -45,15 +46,30 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
         data[regionID]["long"] = row[9];
       }
       data[regionID][dataObj[key].type] = {};
+
+      let sumOfRates = 0;
+      const rates = [];
+
       dates.forEach((d, i) => {
         const dateKey = moment(d, "M/D/YY").format("YYYYMMDD");
 
         if (dateKey !== "Invalid date") {
           let rate = 0;
-          if (dataByDate[i - 1]) {
-            rate = (dataByDate[i] - dataByDate[i - 1]) / dataByDate[i - 1];
-          };
-          data[regionID][dataObj[key].type][dateKey] = { count: dataByDate[i], rate };
+
+          rate = i > 0 ? (dataByDate[i] - dataByDate[i - 1]) / dataByDate[i - 1] : 0;
+          if (rate > 0) {
+            rates.push(rate);
+          }
+
+
+          let movingAvg = rates.length >= 5 ? harmonicMean(rates.slice(rates.length - 5)) : 0;
+          if (i > 1) {
+            const keyOfPrevDate = Object.keys(data[regionID][dataObj[key].type])[i - 2];
+            data[regionID][dataObj[key].type][keyOfPrevDate].movingAvg = movingAvg;
+          }
+
+          sumOfRates += rate;
+          data[regionID][dataObj[key].type][dateKey] = { count: dataByDate[i], rate, sma: sumOfRates / (i + 1), harm: rates.length > 0 ? harmonicMean(rates) : 0 };
         }
       });
     });
