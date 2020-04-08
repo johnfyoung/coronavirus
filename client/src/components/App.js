@@ -11,7 +11,7 @@ import {
   navActions,
   installActions,
   logActions,
-  geolocActions
+  geolocActions,
   statsActions
 } from "../redux/actions";
 
@@ -36,14 +36,14 @@ class App extends Component {
   // }
 
   componentDidMount = () => {
-    dbg("App::componentDidMount props", this.props);
-    dbg("App::componentDidMount history post App mount", history);
+    dbg.log("App::componentDidMount props", this.props);
+    dbg.log("App::componentDidMount history post App mount", history);
     this.props.announce("Here is a site wide announcement");
 
     this.props.getLastUpdated().then(() => {
       this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
     });
-    
+
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.handleGeoLocation, function () { /*no op*/ });
@@ -154,8 +154,8 @@ const mapStateToProps = ({ alert, auth, nav, stats, service }) => {
     isAuthd: auth.authenticated,
     announcement: alert.announcement,
     nav,
-    appName: nav.brand.label
-    geoloc: service.geoloc
+    appName: nav.brand.label,
+    geoloc: service.geoloc,
     statsLastUpdated: stats.lastUpdated
   };
 };
@@ -166,8 +166,8 @@ const actionCreators = {
   locationChange: navActions.locationChanged,
   errorAlert: alertActions.error,
   checkInstallation: installActions.checkInstallation,
-  captureUserEvent: logActions.captureUserEvent
-  getLastUpdated: statsActions.getLastUpdated
+  captureUserEvent: logActions.captureUserEvent,
+  getLastUpdated: statsActions.getLastUpdated,
   lookupUserLocation: geolocActions.lookupUserLocation
 };
 

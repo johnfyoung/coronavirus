@@ -46,7 +46,7 @@ if (process.env.NODE_ENV === "production") {
   //Set Static folder
   app.use(express.static("client/build"));
 
-  app.get("*", (req, res) => {
+  app.get("/*", (req, res) => {
     console.log("Got a different route!");
     res.sendFile(path.join(__dirname, "/client/build", "index.html"));
   });
