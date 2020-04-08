@@ -11,11 +11,13 @@ This is a MERN app boilerplate.
 - Redux
 - JWT tokens
 - User authentication
+- App configuration in the package.json
 - an installer screen
+- Geolocation through Location IQ
 
 ## Usage for development
 
-1. In the root `package.json` set your application's `name` and `displayName`
+1. In the root `package.json` set your application's `name`, `displayName` and `author`
 1. run `npm i`
 1. duplicate `.env.sample` into `.env`
 1. In the `.env`
@@ -27,6 +29,7 @@ This is a MERN app boilerplate.
 - set `RAPIDAPI_APP_KEY` to an app at Rapid API
 - set `GITHUB_ACCESS_TOKEN` to an app token you create at GitHub
 - set `REACT_APP_NAME` to "Coronavirus Dashboard"
+- set `APIKEY_LOCATIONIQ` to your Location IQ API key
 
 ## For Heroku deployment
 

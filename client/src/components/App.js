@@ -11,6 +11,7 @@ import {
   navActions,
   installActions,
   logActions,
+  geolocActions
   statsActions
 } from "../redux/actions";
 
@@ -30,19 +31,30 @@ import RegisterPage from "./connected/pages/RegisterPage";
 import NotFoundPage from "./connected/pages/NotFound";
 
 class App extends Component {
+  // state = {
+  //   geolocation: null
+  // }
+
   componentDidMount = () => {
-    dbg.log("App::componentDidMount props", this.props);
-    dbg.log("App::componentDidMount history post App mount", history);
-    //this.props.announce("Here is a site wide announcement");
+    dbg("App::componentDidMount props", this.props);
+    dbg("App::componentDidMount history post App mount", history);
+    this.props.announce("Here is a site wide announcement");
 
     this.props.getLastUpdated().then(() => {
       this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
     });
+    
 
-    dbg.log("Author:", process.env.REACT_APP_AUTHOR);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(this.handleGeoLocation, function () { /*no op*/ });
+    }
     history.listen(this.handleLocationChange);
 
     this.handleLocationChange(history.location, "PUSH");
+  };
+
+  handleGeoLocation = position => {
+    this.props.lookupUserLocation(position.coords.latitude, position.coords.longitude);
   };
 
   handleLocationChange = (location, action) => {
@@ -108,6 +120,8 @@ class App extends Component {
       "/install"
     ];
 
+    const { geoloc } = this.props;
+
     return (
       <div className="App">
         {announcement && announcement.message && (
@@ -116,6 +130,8 @@ class App extends Component {
             message={announcement.message}
           />
         )}
+
+        {geoloc ? <div className="geolocation-bar alert-secondary text-center py-3"><strong>Your location:</strong> {geoloc.address.city}, {geoloc.address.county} County, {geoloc.address.state}</div> : ""}
 
         <Router history={history}>
           <Header nav={topNav} />
@@ -133,12 +149,13 @@ class App extends Component {
   }
 }
 
-const mapStateToProps = ({ alert, auth, nav, stats }) => {
+const mapStateToProps = ({ alert, auth, nav, stats, service }) => {
   return {
     isAuthd: auth.authenticated,
     announcement: alert.announcement,
     nav,
-    appName: nav.brand.label,
+    appName: nav.brand.label
+    geoloc: service.geoloc
     statsLastUpdated: stats.lastUpdated
   };
 };
@@ -149,8 +166,9 @@ const actionCreators = {
   locationChange: navActions.locationChanged,
   errorAlert: alertActions.error,
   checkInstallation: installActions.checkInstallation,
-  captureUserEvent: logActions.captureUserEvent,
+  captureUserEvent: logActions.captureUserEvent
   getLastUpdated: statsActions.getLastUpdated
+  lookupUserLocation: geolocActions.lookupUserLocation
 };
 
 const ConnectedApp = connect(mapStateToProps, actionCreators)(App);

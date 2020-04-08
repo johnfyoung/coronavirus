@@ -1,1 +1,1 @@
-export * from "./statsController";
+export * from "./geoloc.controller";

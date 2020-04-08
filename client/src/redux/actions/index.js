@@ -5,3 +5,4 @@ export * from "./install.actions";
 export * from "./users.actions";
 export * from "./log.actions";
 export * from "./stats.actions";
+export * from "./geoloc.actions";
