@@ -1,2 +1,2 @@
 export * from "./geoloc.controller";
-export * from "./statsController";
+export * from "./stats.controller";
