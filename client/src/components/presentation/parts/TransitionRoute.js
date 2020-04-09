@@ -1,16 +1,27 @@
 import React, { Component } from "react";
 import { CSSTransition } from "react-transition-group";
 import { Route } from "react-router-dom";
-import { isEmpty } from "../../../utils";
+import { isEmpty, dbg } from "../../../utils";
 
 class TransitionRoute extends Component {
   render() {
     const { component: Component, path, routePaths, ...rest } = this.props;
     if (isEmpty(path)) {
+
       return (
         <Route routePaths={routePaths}>
           {routeProps => {
-            if (!routePaths.includes(routeProps.location.pathname)) {
+            const pathParts = routeProps.location.pathname.split("/");
+            dbg.log("pathParts", pathParts);
+            if (routePaths.filter(p => {
+              const routeParts = p.split("/");
+              dbg.log("routeParts", routeParts);
+              const result = routeParts.filter((rp, i) => {
+                return ((rp === pathParts[i]) || rp.startsWith(":"));
+              });
+              return result.length === pathParts.length;
+            }).length === 0) {
+
               return (
                 <CSSTransition
                   in={routeProps.match != null}
@@ -37,7 +48,7 @@ class TransitionRoute extends Component {
               classNames="fade"
               unmountOnExit
             >
-              <Component />
+              <Component match={match} />
             </CSSTransition>
           )}
         </Route>

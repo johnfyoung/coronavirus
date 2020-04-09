@@ -28,6 +28,7 @@ import ProfilePage from "./connected/pages/ProfilePage";
 import SignInPage from "./connected/pages/SignInPage";
 import InstallPage from "./connected/pages/InstallPage";
 import RegisterPage from "./connected/pages/RegisterPage";
+import GraphPage from "./connected/pages/GraphPage";
 import NotFoundPage from "./connected/pages/NotFound";
 
 class App extends Component {
@@ -117,7 +118,8 @@ class App extends Component {
       "/profile",
       "/register",
       "/register/",
-      "/install"
+      "/install",
+      "/county/:state/:county"
     ];
 
     const { geoloc } = this.props;
@@ -141,6 +143,7 @@ class App extends Component {
           <TransitionRoute exact path="/admin" component={AdminPage} />
           <TransitionRoute exact path="/profile" component={ProfilePage} />
           <TransitionRoute exact path="/install" component={InstallPage} />
+          <TransitionRoute path="/county/:state/:county" component={GraphPage} />
           <TransitionRoute routePaths={routePaths} component={NotFoundPage} />
           <Footer />
         </Router>
