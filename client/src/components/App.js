@@ -32,10 +32,6 @@ import GraphPage from "./connected/pages/GraphPage";
 import NotFoundPage from "./connected/pages/NotFound";
 
 class App extends Component {
-  // state = {
-  //   geolocation: null
-  // }
-
   componentDidMount = () => {
     dbg.log("App::componentDidMount props", this.props);
     dbg.log("App::componentDidMount history post App mount", history);
@@ -46,7 +42,7 @@ class App extends Component {
     });
 
 
-    if (navigator.geolocation) {
+    if (!this.props.geoloc && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.handleGeoLocation, function () { /*no op*/ });
     }
     history.listen(this.handleLocationChange);

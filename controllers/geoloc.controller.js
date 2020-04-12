@@ -35,7 +35,6 @@ const reverseGeocode = async (lat, long) => {
         });
 
         result = response.data;
-        dbg("Geoloc result", result);
     } catch (err) {
         logError(`geolocation::reverseGeocode::Error - ${err}`);
     }

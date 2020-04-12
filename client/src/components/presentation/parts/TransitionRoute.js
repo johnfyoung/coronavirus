@@ -3,6 +3,13 @@ import { CSSTransition } from "react-transition-group";
 import { Route } from "react-router-dom";
 import { isEmpty, dbg } from "../../../utils";
 
+/**
+ * Wraps the CSSTransition component in order to act similarly to a Switch
+ * 
+ * CSSTransitions do not work with the react-router-dom Switch
+ * 
+ * This whole thing feels hacky and I honestly don't remember all the reasons for doing it this way.
+ */
 class TransitionRoute extends Component {
   render() {
     const { component: Component, path, routePaths, ...rest } = this.props;
@@ -12,10 +19,8 @@ class TransitionRoute extends Component {
         <Route routePaths={routePaths}>
           {routeProps => {
             const pathParts = routeProps.location.pathname.split("/");
-            dbg.log("pathParts", pathParts);
             if (routePaths.filter(p => {
               const routeParts = p.split("/");
-              dbg.log("routeParts", routeParts);
               const result = routeParts.filter((rp, i) => {
                 return ((rp === pathParts[i]) || rp.startsWith(":"));
               });

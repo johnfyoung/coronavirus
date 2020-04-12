@@ -6,14 +6,11 @@ export const stats = function (state = initialState, action) {
     switch (action.type) {
         case statsConstants.STATS_GET_STATES:
             return {
-                ...state,
-                currentCounty: "",
-                currentState: ""
+                ...state
             };
         case statsConstants.STATS_GET_COUNTIES:
             return {
-                ...state,
-                currentCounty: ""
+                ...state
             };
         case statsConstants.STATS_SELECT_STATE:
             return {
