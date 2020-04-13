@@ -187,7 +187,7 @@ class HomePage extends Component {
                     <tr>
                       <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>County</span></button></th>
                       <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
-                      <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Rate (Pct)</span></button></th>
+                      <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Growth Rate (5 day moving avg)</span></button></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -203,57 +203,57 @@ class HomePage extends Component {
               ) : <table>
                   <tbody>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                     <tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr><tr>
-                      <td class="td-1"><span></span></td>
-                      <td class="td-2"><span></span></td>
-                      <td class="td-3"><span></span></td>
-                      <td class="td-5"><span></span></td>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
                     </tr>
                   </tbody>
                 </table>) : ""}
