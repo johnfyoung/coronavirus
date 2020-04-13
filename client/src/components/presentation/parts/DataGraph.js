@@ -20,7 +20,7 @@ export default class DataGraph extends Component {
             row.casesMov = data.casesByDate[0][date]["movingAvg"] && !Number.isNaN(data.casesByDate[0][date]["movingAvg"]) && data.casesByDate[0][date]["movingAvg"] >= 0 ? parseFloat(data.casesByDate[0][date]["movingAvg"]) : 0;
 
             row.deathsCount = parseInt(data.deathsByDate[0][date]["count"]);
-            row.deathsRate = data.deathsByDate[0][date]["rate"] && !Number.isNaN(data.deathsByDate[0][date]["rate"]) && data.deathsByDate[0][date]["rate"] >= 0 ? parseFloat(data.deathsByDate[0][date]["rate"]) : 0;
+            row.fatalityRate = row.deathsCount > 0 && row.casesCount > 0 ? row.deathsCount / row.casesCount : 0
             row.deathsHarm = data.deathsByDate[0][date]["harm"] && !Number.isNaN(data.deathsByDate[0][date]["harm"]) && data.deathsByDate[0][date]["harm"] >= 0 ? parseFloat(data.deathsByDate[0][date]["harm"]) : 0;
 
             reformattedData.push(row);
@@ -51,7 +51,7 @@ export default class DataGraph extends Component {
                         <Legend />
                         <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
                         <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" dot={false} />
-                        <Line type="monotone" yAxisId="right" dataKey="deathsRate" stroke="#FF0000" dot={false} />
+                        <Line type="monotone" yAxisId="right" dataKey="fatalityRate" stroke="#FF0000" dot={false} />
                     </LineChart>
                 </ResponsiveContainer>
                 <h2>Cases rate of change</h2>
