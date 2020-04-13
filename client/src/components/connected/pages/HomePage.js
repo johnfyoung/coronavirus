@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 
 import ConnectedPage from "../../connected/templates/ConnectedPage";
 import DataGraph from "../../presentation/parts/DataGraph";
@@ -10,32 +11,39 @@ class HomePage extends Component {
   state = {
     states: [],
     counties: [],
+    sortedCounties: [],
     selectedState: "",
     selectedCounty: "",
     data: null,
-    dataMax: 0
+    dataMax: 0,
+    sort: "count",
+    sortDirection: "desc"
   }
 
   componentDidMount() {
     dbg.log("Mounting Home page");
-    const { geoloc, currentState, currentCounty, selectState, selectCounty, getStates, getCounties } = this.props;
+    const { geoloc, currentState, currentCounty, selectState, selectCounty, getStates, getCounties, getCountiesSorted } = this.props;
 
     getStates().then(statesList => {
 
       if (currentState) {
         dbg.log("Mounting HomePage::have a currentState");
-        getCounties(currentState).then(countiesData => {
 
-          this.props.getCasesByCounty(currentState, currentCounty).then(data => {
+        getCountiesSorted(currentState, "count").then(sortedCounties => {
+          dbg.log("Sorted counties on mount", sortedCounties);
+          getCounties(currentState).then(countiesData => {
 
-            const newState = { states: statesList, counties: countiesData };
-            if (data.length > 0) {
-              this.setState({ ...newState, data: data[0] })
-            } else {
-              this.setState(newState);
-            }
+            this.props.getCasesByCounty(currentState, currentCounty).then(data => {
+
+              const newState = { states: statesList, counties: countiesData, sortedCounties };
+              if (data.length > 0) {
+                this.setState({ ...newState, data: data[0] })
+              } else {
+                this.setState(newState);
+              }
+            });
+
           });
-
         });
 
       } else {
@@ -46,7 +54,7 @@ class HomePage extends Component {
 
   componentDidUpdate(prevProps) {
     dbg.log("Updating Home page");
-    const { geoloc, selectState, selectCounty, getCounties, currentState, currentCounty } = this.props;
+    const { geoloc, selectState, selectCounty, getCounties, getCountiesSorted, currentState, currentCounty } = this.props;
 
     let countyName = currentCounty;
     let stateName = currentState;
@@ -63,21 +71,25 @@ class HomePage extends Component {
     if (countyName !== prevProps.currentCounty || stateName !== prevProps.currentState) {
       dbg.log("HomePage::Updating county or statename");
       if (stateName) {
-        getCounties(stateName).then(countiesData => {
+        getCountiesSorted(stateName, "count").then(sortedCounties => {
+          dbg.log("Sorted counties on update", sortedCounties);
 
-          if (countyName) {
-            this.props.getCasesByCounty(stateName, countyName).then(data => {
+          getCounties(stateName).then(countiesData => {
 
-              const newState = { counties: countiesData, selectedState: geoloc.address.state, selectedCounty: geoloc.address.county };
-              if (data.length > 0) {
-                this.setState({ ...newState, data: data[0] })
-              } else {
-                this.setState(newState);
-              }
-            });
-          } else {
-            this.setState({ selectedCounty: countyName });
-          }
+            if (countyName) {
+              this.props.getCasesByCounty(stateName, countyName).then(data => {
+
+                const newState = { counties: countiesData, selectedState: geoloc.address.state, selectedCounty: geoloc.address.county, sortedCounties };
+                if (data.length > 0) {
+                  this.setState({ ...newState, data: data[0] })
+                } else {
+                  this.setState(newState);
+                }
+              });
+            } else {
+              this.setState({ selectedCounty: countyName });
+            }
+          });
         });
       } else {
         this.setState({ selectedState: stateName });
@@ -87,12 +99,18 @@ class HomePage extends Component {
 
   handleSelectState = (ev) => {
     const stateName = ev.target.value;
-    this.props.selectState(stateName);
-    if (stateName) {
-      this.setState({ selectedState: stateName }, () => {
-        this.retrieveCounties(stateName);
-      })
-    }
+
+    this.setState({ sortedCounties: [] }, () => {
+      this.props.selectState(stateName);
+      if (stateName) {
+        this.props.getCountiesSorted(stateName, "count").then(sortedCounties => {
+          this.setState({ selectedState: stateName, sortedCounties }, () => {
+            this.retrieveCounties(stateName);
+          })
+        });
+      }
+    })
+
   }
 
   handleSelectCounty = (ev) => {
@@ -111,6 +129,10 @@ class HomePage extends Component {
       })
     }
   }
+
+  handleSortClick = (sort, ev) => {
+    ev.preventDefault();
+  };
 
   retrieveStates = () => {
     return this.props.getStates().then(statesData => {
@@ -147,7 +169,7 @@ class HomePage extends Component {
                   {this.state.states.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              {currentState ? (
+              {/* {currentState ? (
                 <div className="form-group">
                   <label htmlFor="selectCounty">Choose a county</label>
                   <select className="form-control" id="selectCounty" onChange={this.handleSelectCounty} value={currentCounty}>
@@ -155,10 +177,87 @@ class HomePage extends Component {
                     {this.state.counties.map(c => <option key={c._id} value={c.county}>{c.county}</option>)}
                   </select>
                 </div>
-              ) : ""}
-              {currentCounty && this.state.data ? (
+              ) : ""} */}
+              {/* {currentCounty && this.state.data ? (
                 <DataGraph data={this.state.data} />
-              ) : ""}
+              ) : ""} */}
+              {currentState && this.state.sortedCounties.length > 0 ? (
+                <table className="table table-striped">
+                  <thead className="thead-dark">
+                    <tr>
+                      <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>County</span></button></th>
+                      <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
+                      <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Rate (Pct)</span></button></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.sortedCounties.map(county => (
+                      <tr key={county.uniqueKey}>
+                        <td><Link to={`/county/${county.state}/${county.county}`} className="btn btn-link">{county.county}</Link></td>
+                        <td>{county.currentCasesCount}</td>
+                        <td>{(county.currentMovingAvg * 100).toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <table>
+                  <tbody>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr><tr>
+                      <td class="td-1"><span></span></td>
+                      <td class="td-2"><span></span></td>
+                      <td class="td-3"><span></span></td>
+                      <td class="td-5"><span></span></td>
+                    </tr>
+                  </tbody>
+                </table>}
+
 
             </form>
           </div>
@@ -183,7 +282,8 @@ const actionCreators = {
   getCounties: statsActions.getCounties,
   selectState: statsActions.selectState,
   selectCounty: statsActions.selectCounty,
-  getCasesByCounty: statsActions.getCasesByCounty
+  getCasesByCounty: statsActions.getCasesByCounty,
+  getCountiesSorted: statsActions.getCountiesSorted
 };
 
 export default connect(

@@ -1,5 +1,6 @@
 import { statsConstants, serviceConstants } from "../constants";
 import { statsServices } from "../../services";
+import { dbg } from "../../utils";
 
 const getStates = () => {
     return dispatch => {
@@ -75,7 +76,24 @@ const getLastUpdated = () => {
             dispatch({ type: serviceConstants.POSTBACK_ERROR });
         }).finally(() => {
             dispatch({ type: serviceConstants.POSTBACK_END });
-        });;
+        });
+    }
+}
+
+const getCountiesSorted = (stateName, sort) => {
+    return dispatch => {
+        dispatch({ type: serviceConstants.POSTBACK_BEGIN });
+
+        return statsServices.getCountiesSorted(stateName, sort).then(data => {
+            dispatch({ type: statsConstants.STATS_GET_CASESBYCOUNTY_SORTED, payload: data });
+            dispatch({ type: statsConstants.STATS_SUCCESS });
+            return data;
+        }).catch(err => {
+            dispatch({ type: statsConstants.STATS_FAILURE });
+            dispatch({ type: serviceConstants.POSTBACK_ERROR });
+        }).finally(() => {
+            dispatch({ type: serviceConstants.POSTBACK_END });
+        });
     }
 }
 
@@ -97,5 +115,6 @@ export const statsActions = {
     selectState,
     selectCounty,
     getCasesByCounty,
+    getCountiesSorted,
     getLastUpdated
 };

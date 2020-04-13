@@ -27,7 +27,31 @@ const makeUniqueKey = function (country, state, county) {
         .replace(/[\s'()]/g, "")}`;
 };
 
-// 
+casesByCountySchema.statics.getCasesSorted = async function (state, sort = "count", dateStr = "") {
+  const match = { state };
+  const sortQuery = sort === "count" ? { currentCasesCount: -1 } : { currentMovingAvg: -1 };
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
+  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment().subtract(2, "d").format("YYYYMMDD");
+
+  return await this.aggregate([
+    {
+      $match: match
+    },
+    {
+      $unwind: "$casesByDate"
+    },
+    {
+      $addFields: {
+        currentCasesCount: { $toInt: `$casesByDate.${formattedDate}.count` },
+        currentMovingAvg: { $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg` }
+      }
+    },
+    {
+      $sort: sortQuery
+    }
+  ]);
+};
+
 casesByCountySchema.statics.formatDataPull = dataObj => {
   const data = {};
   for (const key of Object.keys(dataObj)) {

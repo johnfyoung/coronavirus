@@ -48,8 +48,8 @@ export default class DataGraph extends Component {
                         <YAxis type="number" yAxisId="left" orientation="left" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" activeDot={{ r: 8 }} />
-                        <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" />
+                        <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
+                        <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" dot={false} />
                     </LineChart>
                 </ResponsiveContainer>
                 <h2>Cases rate of change</h2>
@@ -66,8 +66,8 @@ export default class DataGraph extends Component {
                         <Tooltip />
                         <Legend />
                         <Brush />
-                        <Line type="monotone" yAxisId="left" dataKey="casesRate" stroke="#cccccc" activeDot={{ r: 8 }} />
-                        <Line type="monotone" yAxisId="left" dataKey="casesMov" stroke="#c4355d" activeDot={{ r: 8 }} />
+                        <Line type="monotone" yAxisId="left" dataKey="casesRate" stroke="#cccccc" dot={false} activeDot={{ r: 8 }} />
+                        <Line type="monotone" yAxisId="left" dataKey="casesMov" stroke="#c4355d" dot={false} activeDot={{ r: 8 }} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

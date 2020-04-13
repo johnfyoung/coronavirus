@@ -67,6 +67,15 @@ export const statsController = {
 
     return null;
   },
+  getCountiesSorted: async (stateName, sort) => {
+    try {
+      return await CasesByCounty.getCasesSorted(stateName, sort);
+    } catch (err) {
+      logError(
+        `statsController::getCountiesSorted::Error aggregating data ${err}`
+      );
+    }
+  },
   getStateList: async () => {
     try {
       return await CasesByCounty.distinct("state");

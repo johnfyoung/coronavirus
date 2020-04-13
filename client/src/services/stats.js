@@ -46,6 +46,21 @@ const getCasesByCounty = (stateName, countyName) => {
     })
 }
 
+const getCountiesSorted = (stateName, sort = "count") => {
+    return axios.get(`/api/stats/us/cases-by-county-sorted/${stateName}/${sort}`).then(res => {
+        dbg.log("statsServices::getCountiesSorted response", res);
+
+        if (res.status === 200) {
+            return res.data;
+        }
+    }).catch(error => {
+        dbg.log("statsServices::getCountiesSorted error", error);
+        const err = Error("Stats error");
+        err.data = error.response.data;
+        throw err;
+    })
+}
+
 const getLastUpdated = () => {
     return axios.get("/api/stats/us/last-updated").then(res => {
         dbg.log("statsServices::getLastUpdated response", res);
@@ -64,5 +79,6 @@ export const statsServices = {
     getStates,
     getCounties,
     getCasesByCounty,
-    getLastUpdated
+    getLastUpdated,
+    getCountiesSorted
 }

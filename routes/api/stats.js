@@ -44,6 +44,19 @@ router.get("/us/cases-by-county/:stateName/:countyName?", async (req, res) => {
   }
 });
 
+router.get("/us/cases-by-county-sorted/:stateName/:sort?", async (req, res) => {
+  const result = await statsController.getCountiesSorted(
+    req.params.stateName,
+    req.params.sort
+  );
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
 router.get("/us/county-list/:stateName?", async (req, res) => {
   const result = await statsController.getCountyList(
     req.params.stateName
