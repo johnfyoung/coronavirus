@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { Router } from "react-router-dom";
 
 import moment from "moment";
+import ReactGA from 'react-ga';
 
 import { dbg, history } from "../utils";
 
@@ -31,6 +32,8 @@ import RegisterPage from "./connected/pages/RegisterPage";
 import GraphPage from "./connected/pages/GraphPage";
 import NotFoundPage from "./connected/pages/NotFound";
 
+require("dotenv").config();
+
 class App extends Component {
   componentDidMount = () => {
     dbg.log("App::componentDidMount props", this.props);
@@ -41,6 +44,7 @@ class App extends Component {
       this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
     });
 
+    ReactGA.initialize(process.env.REACT_APP_GA);
 
     if (!this.props.geoloc && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.handleGeoLocation, function () { /*no op*/ });
@@ -59,6 +63,8 @@ class App extends Component {
     const { nav, locationChange, clearAlert, captureUserEvent } = this.props;
 
     captureUserEvent({ type: "navigation", path: location.pathname });
+    ReactGA.set({ page: location.pathname });
+    ReactGA.pageview(location.pathname);
 
     if (location.pathname === "/install") {
       this.props.checkInstallation();

@@ -7,6 +7,8 @@ import DataGraph from "../../presentation/parts/DataGraph";
 import { dbg } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
 
+import ReactGA from "react-ga";
+
 class HomePage extends Component {
   state = {
     states: [],
@@ -106,6 +108,7 @@ class HomePage extends Component {
         this.props.getCountiesSorted(stateName, "count").then(sortedCounties => {
           this.setState({ selectedState: stateName, sortedCounties }, () => {
             this.retrieveCounties(stateName);
+            ReactGA.event({ category: "State Counties", action: "load", label: stateName })
           })
         });
       }
