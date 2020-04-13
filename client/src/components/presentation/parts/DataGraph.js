@@ -46,10 +46,12 @@ export default class DataGraph extends Component {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis type="number" yAxisId="left" orientation="left" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
+                        <YAxis type="number" yAxisId="right" orientation="right" domain={[0, .2]} allowDataOverflow={true} />
                         <Tooltip />
                         <Legend />
                         <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
                         <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" dot={false} />
+                        <Line type="monotone" yAxisId="right" dataKey="deathsRate" stroke="#FF0000" dot={false} />
                     </LineChart>
                 </ResponsiveContainer>
                 <h2>Cases rate of change</h2>
