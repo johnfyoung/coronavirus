@@ -28,29 +28,30 @@ class HomePage extends Component {
 
     getStates().then(statesList => {
 
-      if (currentState) {
-        dbg.log("Mounting HomePage::have a currentState");
+      this.setState({ states: statesList }, () => {
+        if (currentState) {
+          dbg.log("Mounting HomePage::have a currentState");
 
-        getCountiesSorted(currentState, "count").then(sortedCounties => {
-          dbg.log("Sorted counties on mount", sortedCounties);
-          getCounties(currentState).then(countiesData => {
+          getCountiesSorted(currentState, "count").then(sortedCounties => {
+            dbg.log("Sorted counties on mount", sortedCounties);
+            ReactGA.event({ category: "State Counties", action: "load", label: currentState })
+            getCounties(currentState).then(countiesData => {
 
-            this.props.getCasesByCounty(currentState, currentCounty).then(data => {
+              this.props.getCasesByCounty(currentState, currentCounty).then(data => {
 
-              const newState = { states: statesList, counties: countiesData, sortedCounties };
-              if (data.length > 0) {
-                this.setState({ ...newState, data: data[0] })
-              } else {
-                this.setState(newState);
-              }
+                const newState = { counties: countiesData, sortedCounties };
+                if (data.length > 0) {
+                  this.setState({ ...newState, data: data[0] })
+                } else {
+                  this.setState(newState);
+                }
+              });
+
             });
-
           });
-        });
 
-      } else {
-        this.setState({ states: statesList });
-      }
+        }
+      });
     });
   }
 
@@ -75,6 +76,7 @@ class HomePage extends Component {
       if (stateName) {
         getCountiesSorted(stateName, "count").then(sortedCounties => {
           dbg.log("Sorted counties on update", sortedCounties);
+          //ReactGA.event({ category: "State Counties", action: "load", label: stateName })
 
           getCounties(stateName).then(countiesData => {
 
@@ -108,7 +110,7 @@ class HomePage extends Component {
         this.props.getCountiesSorted(stateName, "count").then(sortedCounties => {
           this.setState({ selectedState: stateName, sortedCounties }, () => {
             this.retrieveCounties(stateName);
-            ReactGA.event({ category: "State Counties", action: "load", label: stateName })
+            ReactGA.event({ category: "State Counties", action: "load", label: stateName });
           })
         });
       }

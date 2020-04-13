@@ -55,7 +55,9 @@ class App extends Component {
   };
 
   handleGeoLocation = position => {
-    this.props.lookupUserLocation(position.coords.latitude, position.coords.longitude);
+    this.props.lookupUserLocation(position.coords.latitude, position.coords.longitude).then((data) => {
+      ReactGA.event({ category: "GeoLoc", action: "lookup", label: `${data.address.city}, ${data.address.county}, ${data.address.state}` });
+    });
   };
 
   handleLocationChange = (location, action) => {

@@ -8,8 +8,9 @@ const lookupUserLocation = (lat, long) => {
         dispatch({ type: serviceConstants.POSTBACK_BEGIN });
         dispatch({ type: serviceConstants.GEOCODE_ALLOW, payload: { lat, long } });
 
-        geolocServices.reverseGeocode(lat, long).then(data => {
+        return geolocServices.reverseGeocode(lat, long).then(data => {
             dispatch({ type: serviceConstants.GEOCODE_REVERSE_USERLOOKUP, payload: data });
+            return data;
         }).catch(err => {
             dispatch({ type: serviceConstants.POSTBACK_ERROR, error: err });
         }).finally(() => {
