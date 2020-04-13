@@ -20,7 +20,7 @@
   },
   "author": "John Young",
   "license": "ISC",
-  "googleAnalyitics": "UA-3144239-14",
+  "googleAnalytics": "UA-3144239-14",
   "repository": "github:johnfyoung/coronavirus",
   "dependencies": {
     "@babel/cli": "^7.8.4",
