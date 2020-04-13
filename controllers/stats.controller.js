@@ -1,5 +1,6 @@
 import { dataPullNames } from "../config";
 import { logError, dbg } from "../util/tools";
+import moment from "moment";
 
 import {
   johnsHopkinsRetrieveData,
@@ -69,7 +70,7 @@ export const statsController = {
   },
   getCountiesSorted: async (stateName, sort) => {
     try {
-      return await CasesByCounty.getCasesSorted(stateName, sort);
+      return await CasesByCounty.getCasesSorted(stateName, sort, moment().subtract(1, "d").format("YYYYMMDD"));
     } catch (err) {
       logError(
         `statsController::getCountiesSorted::Error aggregating data ${err}`
