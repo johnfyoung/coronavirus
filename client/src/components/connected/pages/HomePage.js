@@ -181,7 +181,7 @@ class HomePage extends Component {
               {/* {currentCounty && this.state.data ? (
                 <DataGraph data={this.state.data} />
               ) : ""} */}
-              {currentState && this.state.sortedCounties.length > 0 ? (
+              {currentState ? (this.state.sortedCounties.length > 0 ? (
                 <table className="table table-striped">
                   <thead className="thead-dark">
                     <tr>
@@ -256,7 +256,7 @@ class HomePage extends Component {
                       <td class="td-5"><span></span></td>
                     </tr>
                   </tbody>
-                </table>}
+                </table>) : ""}
 
 
             </form>
