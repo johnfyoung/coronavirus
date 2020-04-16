@@ -11,149 +11,149 @@ import ReactGA from "react-ga";
 
 class HomePage extends Component {
   state = {
-    states: [],
-    counties: [],
-    sortedCounties: [],
-    selectedState: "",
-    selectedCounty: "",
-    data: null,
-    dataMax: 0,
-    sort: "count",
-    sortDirection: "desc"
+    sort: "caseCount",
+    sortDirection: "desc",
+    sortedData: []
   }
 
   componentDidMount() {
     dbg.log("Mounting Home page");
-    const { geoloc, currentState, currentCounty, selectState, selectCounty, getStates, getCounties, getCountiesSorted } = this.props;
+    const { getStatesSorted } = this.props;
+    const { sort, sortDirection } = this.state;
 
-    getStates().then(statesList => {
-
-      this.setState({ states: statesList }, () => {
-        if (currentState) {
-          dbg.log("Mounting HomePage::have a currentState");
-
-          getCountiesSorted(currentState, "count").then(sortedCounties => {
-            dbg.log("Sorted counties on mount", sortedCounties);
-            ReactGA.event({ category: "State Counties", action: "load", label: currentState })
-            getCounties(currentState).then(countiesData => {
-
-              this.props.getCasesByCounty(currentState, currentCounty).then(data => {
-
-                const newState = { counties: countiesData, sortedCounties };
-                if (data.length > 0) {
-                  this.setState({ ...newState, data: data[0] })
-                } else {
-                  this.setState(newState);
-                }
-              });
-
-            });
-          });
-
-        }
-      });
+    getStatesSorted(sort, sortDirection).then(result => {
+      dbg.log("Got the sortedStates data", result);
+      this.setState({ sortedData: result });
     });
+
+    // getStates().then(statesList => {
+
+    //   this.setState({ states: statesList }, () => {
+    //     if (currentState) {
+    //       dbg.log("Mounting HomePage::have a currentState");
+
+    //       getCountiesSorted(currentState, "count").then(sortedCounties => {
+    //         dbg.log("Sorted counties on mount", sortedCounties);
+    //         ReactGA.event({ category: "State Counties", action: "load", label: currentState })
+    //         getCounties(currentState).then(countiesData => {
+
+    //           this.props.getCasesByCounty(currentState, currentCounty).then(data => {
+
+    //             const newState = { counties: countiesData, sortedCounties };
+    //             if (data.length > 0) {
+    //               this.setState({ ...newState, data: data[0] })
+    //             } else {
+    //               this.setState(newState);
+    //             }
+    //           });
+
+    //         });
+    //       });
+
+    //     }
+    //   });
+    // });
   }
 
   componentDidUpdate(prevProps) {
     dbg.log("Updating Home page");
     const { geoloc, selectState, selectCounty, getCounties, getCountiesSorted, currentState, currentCounty } = this.props;
 
-    let countyName = currentCounty;
-    let stateName = currentState;
+    // let countyName = currentCounty;
+    // let stateName = currentState;
 
-    if (geoloc !== prevProps.geoloc) {
-      dbg.log("HomePage::Updating geoloc");
-      selectState(geoloc.address.state);
-      stateName = geoloc.address.state;
+    // if (geoloc !== prevProps.geoloc) {
+    //   dbg.log("HomePage::Updating geoloc");
+    //   selectState(geoloc.address.state);
+    //   stateName = geoloc.address.state;
 
-      selectCounty(geoloc.address.county);
-      countyName = geoloc.address.county;
-    }
+    //   selectCounty(geoloc.address.county);
+    //   countyName = geoloc.address.county;
+    // }
 
-    if (countyName !== prevProps.currentCounty || stateName !== prevProps.currentState) {
-      dbg.log("HomePage::Updating county or statename");
-      if (stateName) {
-        getCountiesSorted(stateName, "count").then(sortedCounties => {
-          dbg.log("Sorted counties on update", sortedCounties);
-          //ReactGA.event({ category: "State Counties", action: "load", label: stateName })
+    // if (countyName !== prevProps.currentCounty || stateName !== prevProps.currentState) {
+    //   dbg.log("HomePage::Updating county or statename");
+    //   if (stateName) {
+    //     getCountiesSorted(stateName, "count").then(sortedCounties => {
+    //       dbg.log("Sorted counties on update", sortedCounties);
+    //       //ReactGA.event({ category: "State Counties", action: "load", label: stateName })
 
-          getCounties(stateName).then(countiesData => {
+    //       getCounties(stateName).then(countiesData => {
 
-            if (countyName) {
-              this.props.getCasesByCounty(stateName, countyName).then(data => {
+    //         if (countyName) {
+    //           this.props.getCasesByCounty(stateName, countyName).then(data => {
 
-                const newState = { counties: countiesData, selectedState: geoloc.address.state, selectedCounty: geoloc.address.county, sortedCounties };
-                if (data.length > 0) {
-                  this.setState({ ...newState, data: data[0] })
-                } else {
-                  this.setState(newState);
-                }
-              });
-            } else {
-              this.setState({ selectedCounty: countyName });
-            }
-          });
-        });
-      } else {
-        this.setState({ selectedState: stateName });
-      }
-    }
+    //             const newState = { counties: countiesData, selectedState: geoloc.address.state, selectedCounty: geoloc.address.county, sortedCounties };
+    //             if (data.length > 0) {
+    //               this.setState({ ...newState, data: data[0] })
+    //             } else {
+    //               this.setState(newState);
+    //             }
+    //           });
+    //         } else {
+    //           this.setState({ selectedCounty: countyName });
+    //         }
+    //       });
+    //     });
+    //   } else {
+    //     this.setState({ selectedState: stateName });
+    //   }
+    // }
   }
 
-  handleSelectState = (ev) => {
-    const stateName = ev.target.value;
+  // handleSelectState = (ev) => {
+  //   const stateName = ev.target.value;
 
-    this.setState({ sortedCounties: [] }, () => {
-      this.props.selectState(stateName);
-      if (stateName) {
-        this.props.getCountiesSorted(stateName, "count").then(sortedCounties => {
-          this.setState({ selectedState: stateName, sortedCounties }, () => {
-            this.retrieveCounties(stateName);
-            ReactGA.event({ category: "State Counties", action: "load", label: stateName });
-          })
-        });
-      }
-    })
+  //   this.setState({ sortedCounties: [] }, () => {
+  //     this.props.selectState(stateName);
+  //     if (stateName) {
+  //       this.props.getCountiesSorted(stateName, "count").then(sortedCounties => {
+  //         this.setState({ selectedState: stateName, sortedCounties }, () => {
+  //           this.retrieveCounties(stateName);
+  //           ReactGA.event({ category: "State Counties", action: "load", label: stateName });
+  //         })
+  //       });
+  //     }
+  //   })
 
-  }
+  // }
 
-  handleSelectCounty = (ev) => {
-    const { currentState } = this.props.stats;
+  // handleSelectCounty = (ev) => {
+  //   const { currentState } = this.props.stats;
 
-    this.props.selectCounty(ev.target.value);
+  //   this.props.selectCounty(ev.target.value);
 
-    if (ev.target.value) {
-      const county = ev.target.value;
-      this.setState({ selectedCounty: county }, () => {
-        this.props.getCasesByCounty(currentState, county).then(data => {
-          if (data.length > 0) {
-            this.setState({ data: data[0] })
-          }
-        });
-      })
-    }
-  }
+  //   if (ev.target.value) {
+  //     const county = ev.target.value;
+  //     this.setState({ selectedCounty: county }, () => {
+  //       this.props.getCasesByCounty(currentState, county).then(data => {
+  //         if (data.length > 0) {
+  //           this.setState({ data: data[0] })
+  //         }
+  //       });
+  //     })
+  //   }
+  // }
 
   handleSortClick = (sort, ev) => {
     ev.preventDefault();
   };
 
-  retrieveStates = () => {
-    return this.props.getStates().then(statesData => {
-      return this.setState({ states: statesData });
-    });
-  }
+  // retrieveStates = () => {
+  //   return this.props.getStates().then(statesData => {
+  //     return this.setState({ states: statesData });
+  //   });
+  // }
 
-  retrieveCounties = (stateName) => {
-    return this.props.getCounties(stateName).then(countiesData => {
-      return this.setState({ counties: countiesData });
-    });
-  }
+  // retrieveCounties = (stateName) => {
+  //   return this.props.getCounties(stateName).then(countiesData => {
+  //     return this.setState({ counties: countiesData });
+  //   });
+  // }
 
 
   render() {
-    const { currentCounty, currentState } = this.props.stats;
+    const { sortedData } = this.state;
 
     return (
       <ConnectedPage pageClass="page-home" nav={this.props.nav} >
@@ -165,7 +165,84 @@ class HomePage extends Component {
         </div>
         <div className="row">
           <div className="col-12">
-            <h2>By county</h2>
+            {sortedData.length > 0 ? (
+              <table className="table table-striped">
+                <thead className="thead-dark">
+                  <tr>
+                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>State</span></button></th>
+                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
+                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Death Count</span></button></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedData.map(stateData => (
+                    <tr key={stateData.state}>
+                      <td><Link to={`/state/${stateData.state}`} className="btn btn-link">{stateData.state}</Link></td>
+                      <td>{stateData.totalCases}</td>
+                      <td>{stateData.totalDeaths}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+                <table>
+                  <tbody>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                    <tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr><tr>
+                      <td className="td-1"><span></span></td>
+                      <td className="td-2"><span></span></td>
+                      <td className="td-3"><span></span></td>
+                      <td className="td-5"><span></span></td>
+                    </tr>
+                  </tbody>
+                </table>)}
+            {/* <h2>By county</h2>
             <form>
               <div className="form-group">
                 <label htmlFor="selectState">Choose a state</label>
@@ -173,8 +250,8 @@ class HomePage extends Component {
                   <option value="">Select a state...</option>
                   {this.state.states.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
-              </div>
-              {/* {currentState ? (
+              </div> */}
+            {/* {currentState ? (
                 <div className="form-group">
                   <label htmlFor="selectCounty">Choose a county</label>
                   <select className="form-control" id="selectCounty" onChange={this.handleSelectCounty} value={currentCounty}>
@@ -183,10 +260,10 @@ class HomePage extends Component {
                   </select>
                 </div>
               ) : ""} */}
-              {/* {currentCounty && this.state.data ? (
+            {/* {currentCounty && this.state.data ? (
                 <DataGraph data={this.state.data} />
               ) : ""} */}
-              {currentState ? (this.state.sortedCounties.length > 0 ? (
+            {/* {currentState ? (this.state.sortedCounties.length > 0 ? (
                 <table className="table table-striped">
                   <thead className="thead-dark">
                     <tr>
@@ -264,7 +341,7 @@ class HomePage extends Component {
                 </table>) : ""}
 
 
-            </form>
+            </form> */}
           </div>
         </div>
       </ConnectedPage >
@@ -288,7 +365,8 @@ const actionCreators = {
   selectState: statsActions.selectState,
   selectCounty: statsActions.selectCounty,
   getCasesByCounty: statsActions.getCasesByCounty,
-  getCountiesSorted: statsActions.getCountiesSorted
+  getCountiesSorted: statsActions.getCountiesSorted,
+  getStatesSorted: statsActions.getStatesSorted
 };
 
 export default connect(

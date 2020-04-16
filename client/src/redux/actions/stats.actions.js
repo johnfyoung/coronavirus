@@ -97,6 +97,23 @@ const getCountiesSorted = (stateName, sort) => {
     }
 }
 
+const getStatesSorted = (sort, direction) => {
+    return dispatch => {
+        dispatch({ type: serviceConstants.POSTBACK_BEGIN });
+
+        return statsServices.getStatesSorted(sort, direction).then(data => {
+            dispatch({ type: statsConstants.STATS_GET_CASESBYSTATE_SORTED, payload: data });
+            dispatch({ type: statsConstants.STATS_SUCCESS });
+            return data;
+        }).catch(err => {
+            dispatch({ type: statsConstants.STATS_FAILURE });
+            dispatch({ type: serviceConstants.POSTBACK_ERROR });
+        }).finally(() => {
+            dispatch({ type: serviceConstants.POSTBACK_END });
+        });
+    }
+}
+
 const selectState = (stateName) => {
     return dispatch => {
         dispatch({ type: statsConstants.STATS_SELECT_STATE, payload: stateName });
@@ -116,5 +133,6 @@ export const statsActions = {
     selectCounty,
     getCasesByCounty,
     getCountiesSorted,
-    getLastUpdated
+    getLastUpdated,
+    getStatesSorted
 };

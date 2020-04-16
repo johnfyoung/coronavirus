@@ -77,6 +77,15 @@ export const statsController = {
       );
     }
   },
+  getStatesSorted: async (sort, direction) => {
+    try {
+      return await CasesByCounty.getStateCasesSorted(sort, direction, moment().subtract(1, "d").format("YYYYMMDD"));
+    } catch (err) {
+      logError(
+        `statsController::getStatesSorted::Error aggregating data ${err}`
+      );
+    }
+  },
   getStateList: async () => {
     try {
       return await CasesByCounty.distinct("state");

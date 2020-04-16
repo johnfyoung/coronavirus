@@ -52,6 +52,36 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   ]);
 };
 
+casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCount", direction = "desc", dateStr = "") {
+  const dir = direction === "desc" ? -1 : 1;
+  const sortQuery = sort === "caseCount" ? { totalCases: dir } : { totalDeaths: dir };
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
+
+  return await this.aggregate([
+    {
+      $unwind: "$casesByDate"
+    },
+    {
+      $unwind: "$deathsByDate"
+    },
+    {
+      $addFields: {
+        currentCasesCount: { $toInt: `$casesByDate.${formattedDate}.count` },
+        currentDeathsCount: { $toInt: `$deathsByDate.${formattedDate}.count` },
+      }
+    },
+    {
+      $group: { _id: { state: "$state" }, totalCases: { $sum: "$currentCasesCount" }, totalDeaths: { $sum: "$currentDeathsCount" } }
+    },
+    {
+      $project: { state: "$_id.state", totalCases: 1, totalDeaths: 1 }
+    },
+    {
+      $sort: sortQuery
+    }
+  ]);
+};
+
 casesByCountySchema.statics.formatDataPull = dataObj => {
   const data = {};
   for (const key of Object.keys(dataObj)) {

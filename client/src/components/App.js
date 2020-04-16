@@ -30,6 +30,7 @@ import SignInPage from "./connected/pages/SignInPage";
 import InstallPage from "./connected/pages/InstallPage";
 import RegisterPage from "./connected/pages/RegisterPage";
 import GraphPage from "./connected/pages/GraphPage";
+import StatePage from "./connected/pages/StatePage";
 import NotFoundPage from "./connected/pages/NotFound";
 
 require("dotenv").config();
@@ -123,6 +124,7 @@ class App extends Component {
       "/register",
       "/register/",
       "/install",
+      "/state/:state",
       "/county/:state/:county"
     ];
 
@@ -147,6 +149,7 @@ class App extends Component {
           <TransitionRoute exact path="/admin" component={AdminPage} />
           <TransitionRoute exact path="/profile" component={ProfilePage} />
           <TransitionRoute exact path="/install" component={InstallPage} />
+          <TransitionRoute path="/state/:state" component={StatePage} />
           <TransitionRoute path="/county/:state/:county" component={GraphPage} />
           <TransitionRoute routePaths={routePaths} component={NotFoundPage} />
           <Footer />
