@@ -1,8 +1,17 @@
-import mongoose, { Schema } from "mongoose";
-import { fieldNamesByCounty } from "../config/constants";
-import { logError, dbg } from "../util/tools";
+import mongoose, {
+  Schema
+} from "mongoose";
+import {
+  fieldNamesByCounty
+} from "../config/constants";
+import {
+  logError,
+  dbg
+} from "../util/tools";
 import moment from "moment";
-import { harmonicMean } from "simple-statistics";
+import {
+  harmonicMean
+} from "simple-statistics";
 
 const casesByCountySchema = new Schema({
   uniqueKey: String,
@@ -14,7 +23,10 @@ const casesByCountySchema = new Schema({
   long: Number,
   casesByDate: Array,
   deathsByDate: Array,
-  dataPull: { type: Schema.Types.ObjectId, ref: "DataPull" }
+  dataPull: {
+    type: Schema.Types.ObjectId,
+    ref: "DataPull"
+  }
 });
 
 const makeUniqueKey = function (country, state, county) {
@@ -28,13 +40,18 @@ const makeUniqueKey = function (country, state, county) {
 };
 
 casesByCountySchema.statics.getCasesSorted = async function (state, sort = "count", dateStr = "") {
-  const match = { state };
-  const sortQuery = sort === "count" ? { currentCasesCount: -1 } : { currentMovingAvg: -1 };
+  const match = {
+    state
+  };
+  const sortQuery = sort === "count" ? {
+    currentCasesCount: -1
+  } : {
+    currentMovingAvg: -1
+  };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
   const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment().subtract(2, "d").format("YYYYMMDD");
 
-  return await this.aggregate([
-    {
+  return await this.aggregate([{
       $match: match
     },
     {
@@ -42,8 +59,12 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
     },
     {
       $addFields: {
-        currentCasesCount: { $toInt: `$casesByDate.${formattedDate}.count` },
-        currentMovingAvg: { $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg` }
+        currentCasesCount: {
+          $toInt: `$casesByDate.${formattedDate}.count`
+        },
+        currentMovingAvg: {
+          $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
+        }
       }
     },
     {
@@ -52,13 +73,67 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   ]);
 };
 
+casesByCountySchema.statics.getCasesTotals = async function (startDate = "20200122", endDate = moment().subtract(1, "day"), stateName = null) {
+  /*
+  db.getCollection('casesbycounties').aggregate([
+      {
+        $unwind: "$casesByDate"
+      },
+      {
+        $unwind: "$deathsByDate"
+      },
+      {
+        $addFields: {
+          "cases_20200415": { $toInt: "$casesByDate.20200415.count" },
+          "deaths_20200415": { $toInt: "$deathsByDate.20200415.count" },
+          "cases_20200416": { $toInt: "$casesByDate.20200416.count" },
+          "deaths_20200416": { $toInt: "$deathsByDate.20200416.count" },
+        }
+      },
+      {
+        $group: { 
+            _id: "Totals",
+            "20201504_cases": { $sum: "$cases_20200415" },
+            "20201504_deaths": { $sum: "$deaths_20200415" },
+            "20201504_cases": { $sum: "$cases_20200415" },
+            "20201504_deaths": { $sum: "$deaths_20200415" },
+            "20201604_cases": { $sum: "$cases_20200416" },
+            "20201604_deaths": { $sum: "$deaths_20200416" }
+        }
+      },
+      {
+        $project: {
+            "bydate": {
+                "20200415" : {
+                    cases: "$20201504_cases",
+                    deaths: "$20201504_deaths"
+                 },
+                "20200416" : {
+                    cases: "$20201604_cases",
+                    deaths: "$20201604_deaths"
+                 }              
+            }
+
+        }
+      },
+      {
+        $sort: {totalCases: -1}
+      }
+    ])
+
+  */
+};
+
 casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCount", direction = "desc", dateStr = "") {
   const dir = direction === "desc" ? -1 : 1;
-  const sortQuery = sort === "caseCount" ? { totalCases: dir } : { totalDeaths: dir };
+  const sortQuery = sort === "caseCount" ? {
+    totalCases: dir
+  } : {
+    totalDeaths: dir
+  };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
 
-  return await this.aggregate([
-    {
+  return await this.aggregate([{
       $unwind: "$casesByDate"
     },
     {
@@ -66,15 +141,33 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
     },
     {
       $addFields: {
-        currentCasesCount: { $toInt: `$casesByDate.${formattedDate}.count` },
-        currentDeathsCount: { $toInt: `$deathsByDate.${formattedDate}.count` },
+        currentCasesCount: {
+          $toInt: `$casesByDate.${formattedDate}.count`
+        },
+        currentDeathsCount: {
+          $toInt: `$deathsByDate.${formattedDate}.count`
+        },
       }
     },
     {
-      $group: { _id: { state: "$state" }, totalCases: { $sum: "$currentCasesCount" }, totalDeaths: { $sum: "$currentDeathsCount" } }
+      $group: {
+        _id: {
+          state: "$state"
+        },
+        totalCases: {
+          $sum: "$currentCasesCount"
+        },
+        totalDeaths: {
+          $sum: "$currentDeathsCount"
+        }
+      }
     },
     {
-      $project: { state: "$_id.state", totalCases: 1, totalDeaths: 1 }
+      $project: {
+        state: "$_id.state",
+        totalCases: 1,
+        totalDeaths: 1
+      }
     },
     {
       $sort: sortQuery
@@ -123,7 +216,12 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
           }
 
           sumOfRates += rate;
-          data[regionID][dataObj[key].type][dateKey] = { count: dataByDate[i], rate, sma: sumOfRates / (i + 1), harm: rates.length > 0 ? harmonicMean(rates) : 0 };
+          data[regionID][dataObj[key].type][dateKey] = {
+            count: dataByDate[i],
+            rate,
+            sma: sumOfRates / (i + 1),
+            harm: rates.length > 0 ? harmonicMean(rates) : 0
+          };
         }
       });
     });
@@ -137,7 +235,9 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
   const formattedData = this.formatDataPull(dataObj);
   try {
     await Promise.all(Object.keys(formattedData).map(async key => {
-      let county = await CasesByCounty.findOne({ uniqueKey: key });
+      let county = await CasesByCounty.findOne({
+        uniqueKey: key
+      });
 
       //dbg("County result", county);
       if (county) {
@@ -196,15 +296,17 @@ casesByCountySchema.statics.getByDataPulls = function (dataPulls = null) {
     return;
   }
 
-  const result = this.aggregate([
-    {
-      $match: {
-        dataPull: { $in: dataPulls }
+  const result = this.aggregate([{
+    $match: {
+      dataPull: {
+        $in: dataPulls
       }
     }
-  ]);
+  }]);
 
-  return this.populate(result, { path: "dataPull" });
+  return this.populate(result, {
+    path: "dataPull"
+  });
 };
 
 export const CasesByCounty = mongoose.model(
