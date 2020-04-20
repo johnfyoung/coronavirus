@@ -14,6 +14,7 @@ This is a MERN app boilerplate.
 - App configuration in the package.json
 - an installer screen
 - Geolocation through Location IQ
+- Ingest of county specific FIPS codes
 
 ## Usage for development
 
@@ -30,6 +31,9 @@ This is a MERN app boilerplate.
 - set `GITHUB_ACCESS_TOKEN` to an app token you create at GitHub
 - set `REACT_APP_NAME` to "Coronavirus Dashboard"
 - set `APIKEY_LOCATIONIQ` to your Location IQ API key
+- set `APIKEY_CENSUS` to your Census Data API key
+
+1. To use the FIPS codes, use `util/apis/file-fips.js` to parse the `csv` files in `_seedData`.
 
 ## For Heroku deployment
 
