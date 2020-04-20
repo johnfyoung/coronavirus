@@ -112,6 +112,13 @@ export const statsController = {
 
     return null;
   },
+  getTotals: async (startDate, endDate, stateName, countyName) => {
+    try {
+      return CasesByCounty.getTotals(startDate, endDate, stateName, countyName);
+    } catch (err) {
+      `statsController::getTotals::Error aggregating data ${err}`
+    }
+  },
   getLatestDataDump: async (dumpName) => {
     return await DataPull.findLatest(dumpName);
   },

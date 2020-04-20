@@ -12,6 +12,7 @@ import moment from "moment";
 import {
   harmonicMean
 } from "simple-statistics";
+import { add } from "winston";
 
 const casesByCountySchema = new Schema({
   uniqueKey: String,
@@ -23,6 +24,12 @@ const casesByCountySchema = new Schema({
   long: Number,
   casesByDate: Array,
   deathsByDate: Array,
+  regionName: String,
+  divisionName: String,
+  regionFIPS: String,
+  divisionFIPS: String,
+  stateFIPS: String,
+  countyFIPS: String,
   dataPull: {
     type: Schema.Types.ObjectId,
     ref: "DataPull"
@@ -46,82 +53,145 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   const sortQuery = sort === "count" ? {
     currentCasesCount: -1
   } : {
-    currentMovingAvg: -1
-  };
+      currentMovingAvg: -1
+    };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
   const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment().subtract(2, "d").format("YYYYMMDD");
 
   return await this.aggregate([{
-      $match: match
-    },
+    $match: match
+  },
+  {
+    $unwind: "$casesByDate"
+  },
+  {
+    $addFields: {
+      currentCasesCount: {
+        $toInt: `$casesByDate.${formattedDate}.count`
+      },
+      currentMovingAvg: {
+        $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
+      }
+    }
+  },
+  {
+    $sort: sortQuery
+  }
+  ]);
+};
+
+const createDateList = (startDate, endDate) => {
+  const dates = [];
+  let currentDateMoment = moment(startDate);
+  const endDateMoment = moment(endDate, "YYYYMMDD");
+  while (currentDateMoment.isSameOrBefore(endDateMoment)) {
+    dates.push(currentDateMoment.format("YYYYMMDD"));
+    currentDateMoment = currentDateMoment.add(1, "day");
+  }
+
+  return dates;
+};
+
+casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = moment().subtract(1, "day").format("YYYYMMDD"), stateName = null, countyName = null) {
+  const addFieldsExpression = {};
+  const groupExpression = { _id: "Totals" };
+  const projectionExpression = { byDate: {} };
+  const dateStrings = createDateList(startDate, endDate);
+
+  if (moment(startDate, "YYYYMMDD").isAfter(moment("20200122", "YYYYMMDD"))) {
+    const leadingDay = moment(startDate, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
+    addFieldsExpression[`cases_${leadingDay}`] = { $toInt: `$casesByDate.${leadingDay}.count` };
+    addFieldsExpression[`deaths_${leadingDay}`] = { $toInt: `$deathsByDate.${leadingDay}.count` };
+    groupExpression[`${leadingDay}_cases`] = { $sum: `$cases_${leadingDay}` };
+    groupExpression[`${leadingDay}_deaths`] = { $sum: `$deaths_${leadingDay}` };
+  }
+
+  dateStrings.map((d, i) => {
+    const precedingDay = moment(d, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
+    addFieldsExpression[`cases_${d}`] = { $toInt: `$casesByDate.${d}.count` };
+    addFieldsExpression[`deaths_${d}`] = { $toInt: `$deathsByDate.${d}.count` };
+    groupExpression[`${d}_cases`] = { $sum: `$cases_${d}` };
+    groupExpression[`${d}_deaths`] = { $sum: `$deaths_${d}` };
+    projectionExpression.byDate[d] = {
+      cases: `$${d}_cases`,
+      casesNew: { $subtract: [`$${d}_cases`, `$${precedingDay}_cases`] },
+      casesRate: {
+        $cond: [
+          {
+            $eq: [
+              `$${precedingDay}_cases`, 0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              {
+                $subtract: [
+                  `$${d}_cases`,
+                  `$${precedingDay}_cases`
+                ]
+              },
+              `$${precedingDay}_cases`
+            ]
+          }
+        ]
+      },
+      deaths: `$${d}_deaths`,
+      deathsNew: { $subtract: [`$${d}_deaths`, `$${precedingDay}_deaths`] },
+      deathsRate: {
+        $cond: [
+          {
+            $eq: [
+              `$${precedingDay}_deaths`, 0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              {
+                $subtract: [
+                  `$${d}_deaths`,
+                  `$${precedingDay}_deaths`
+                ]
+              },
+              `$${precedingDay}_deaths`
+            ]
+          }
+        ]
+      }
+    }
+  });
+
+  const aggregationPipeline = [
     {
       $unwind: "$casesByDate"
     },
     {
-      $addFields: {
-        currentCasesCount: {
-          $toInt: `$casesByDate.${formattedDate}.count`
-        },
-        currentMovingAvg: {
-          $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
-        }
-      }
+      $unwind: "$deathsByDate"
     },
     {
-      $sort: sortQuery
+      $addFields: addFieldsExpression
+    },
+    {
+      $group: groupExpression
+    },
+    {
+      $project: projectionExpression
     }
-  ]);
-};
+  ];
 
-casesByCountySchema.statics.getCasesTotals = async function (startDate = "20200122", endDate = moment().subtract(1, "day"), stateName = null) {
-  /*
-  db.getCollection('casesbycounties').aggregate([
-      {
-        $unwind: "$casesByDate"
-      },
-      {
-        $unwind: "$deathsByDate"
-      },
-      {
-        $addFields: {
-          "cases_20200415": { $toInt: "$casesByDate.20200415.count" },
-          "deaths_20200415": { $toInt: "$deathsByDate.20200415.count" },
-          "cases_20200416": { $toInt: "$casesByDate.20200416.count" },
-          "deaths_20200416": { $toInt: "$deathsByDate.20200416.count" },
-        }
-      },
-      {
-        $group: { 
-            _id: "Totals",
-            "20201504_cases": { $sum: "$cases_20200415" },
-            "20201504_deaths": { $sum: "$deaths_20200415" },
-            "20201504_cases": { $sum: "$cases_20200415" },
-            "20201504_deaths": { $sum: "$deaths_20200415" },
-            "20201604_cases": { $sum: "$cases_20200416" },
-            "20201604_deaths": { $sum: "$deaths_20200416" }
-        }
-      },
-      {
-        $project: {
-            "bydate": {
-                "20200415" : {
-                    cases: "$20201504_cases",
-                    deaths: "$20201504_deaths"
-                 },
-                "20200416" : {
-                    cases: "$20201604_cases",
-                    deaths: "$20201604_deaths"
-                 }              
-            }
+  if (stateName) {
 
-        }
-      },
-      {
-        $sort: {totalCases: -1}
-      }
-    ])
+    const matchQuery = { $match: { state: { $regex: stateName, $options: "i" } } };
 
-  */
+    if (countyName) {
+      matchQuery.$match.county = { $regex: countyName, $options: "i" };
+    }
+    aggregationPipeline.unshift(matchQuery);
+  }
+
+
+  return await this.aggregate(aggregationPipeline);
 };
 
 casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCount", direction = "desc", dateStr = "") {
@@ -129,49 +199,49 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
   const sortQuery = sort === "caseCount" ? {
     totalCases: dir
   } : {
-    totalDeaths: dir
-  };
+      totalDeaths: dir
+    };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
 
   return await this.aggregate([{
-      $unwind: "$casesByDate"
-    },
-    {
-      $unwind: "$deathsByDate"
-    },
-    {
-      $addFields: {
-        currentCasesCount: {
-          $toInt: `$casesByDate.${formattedDate}.count`
-        },
-        currentDeathsCount: {
-          $toInt: `$deathsByDate.${formattedDate}.count`
-        },
-      }
-    },
-    {
-      $group: {
-        _id: {
-          state: "$state"
-        },
-        totalCases: {
-          $sum: "$currentCasesCount"
-        },
-        totalDeaths: {
-          $sum: "$currentDeathsCount"
-        }
-      }
-    },
-    {
-      $project: {
-        state: "$_id.state",
-        totalCases: 1,
-        totalDeaths: 1
-      }
-    },
-    {
-      $sort: sortQuery
+    $unwind: "$casesByDate"
+  },
+  {
+    $unwind: "$deathsByDate"
+  },
+  {
+    $addFields: {
+      currentCasesCount: {
+        $toInt: `$casesByDate.${formattedDate}.count`
+      },
+      currentDeathsCount: {
+        $toInt: `$deathsByDate.${formattedDate}.count`
+      },
     }
+  },
+  {
+    $group: {
+      _id: {
+        state: "$state"
+      },
+      totalCases: {
+        $sum: "$currentCasesCount"
+      },
+      totalDeaths: {
+        $sum: "$currentDeathsCount"
+      }
+    }
+  },
+  {
+    $project: {
+      state: "$_id.state",
+      totalCases: 1,
+      totalDeaths: 1
+    }
+  },
+  {
+    $sort: sortQuery
+  }
   ]);
 };
 
@@ -269,27 +339,6 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
   }
 };
 
-// casesByCountySchema.statics.saveDataPull = function (rows, dt, dPull) {
-//   rows.forEach(r => {
-//     if (r[fieldNamesByCounty.COUNTY] !== "Total") {
-//       this.create(
-//         {
-//           county: r[fieldNamesByCounty.COUNTY],
-//           cases: r[fieldNamesByCounty.CASES],
-//           deaths: r[fieldNamesByCounty.DEATHS],
-//           updateTime: dt,
-//           dataPull: dPull._id
-//         },
-//         function (err) {
-//           if (err) {
-//             logError(`Error saving casesByCounty item: ${err}`);
-//           }
-//         }
-//       );
-//     }
-//   });
-// };
-
 casesByCountySchema.statics.getByDataPulls = function (dataPulls = null) {
   if (!dataPulls) {
     logError("CasesByCounty::getByDataPulls::Missing dataPulls list");
@@ -308,6 +357,33 @@ casesByCountySchema.statics.getByDataPulls = function (dataPulls = null) {
     path: "dataPull"
   });
 };
+
+casesByCountySchema.statics.addFIPS = async function (stateName, countyName, regionName, divisionName, regionFIPS, divisionFIPS, stateFIPS, countyFIPS) {
+  try {
+    let county = await CasesByCounty.findOne({
+      state: stateName,
+      county: countyName
+    });
+
+    //dbg("County result", county);
+    if (county) {
+      //dbg("Got a county!");
+      county.regionName = regionName;
+      county.divisionName = divisionName;
+      county.regionFIPS = regionFIPS;
+      county.divisionFIPS = divisionFIPS;
+      county.stateFIPS = stateFIPS;
+      county.countyFIPS = countyFIPS;
+
+      return await county.save();
+    } else {
+      console.log(`missing county ${stateName} ${countyName}`);
+    }
+
+  } catch (err) {
+    logError(`CasesByCounty::addFIPS::error adding FIPS data to ${countyName}: ${err}`);
+  }
+}
 
 export const CasesByCounty = mongoose.model(
   "casesByCounty",

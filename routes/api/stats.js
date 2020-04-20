@@ -68,6 +68,20 @@ router.get("/us/cases-by-state-sorted/:sort?/:direction?", async (req, res) => {
     res.status(500).send("Unexpected failure gathering data");
   }
 });
+router.get("/us/cases-totals", async (req, res) => {
+  const result = await statsController.getTotals(
+    req.query.start,
+    req.query.end,
+    req.query.state,
+    req.query.county
+  );
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
 router.get("/us/county-list/:stateName?", async (req, res) => {
   const result = await statsController.getCountyList(
     req.params.stateName
