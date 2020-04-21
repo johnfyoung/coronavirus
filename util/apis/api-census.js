@@ -20,8 +20,14 @@ export const getAllCountyPopulations = async () => {
   const endpoint = `${apiURL}pep/population?get=POP&for=county:*${key}`;
 
   try {
-    const response = axios.get(endpoint)
-    console.log(response);
+    dbg("Calling Census API...");
+    const response = await axios.get(endpoint);
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(`Census API returned status ${response.status}: ${response.statusText}`)
+    }
   } catch (err) {
     logError(`api-census::getAllCountyPopulations api call error: ${err}`);
   }

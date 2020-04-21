@@ -12,7 +12,9 @@ import moment from "moment";
 import {
   harmonicMean
 } from "simple-statistics";
-import { add } from "winston";
+import {
+  add
+} from "winston";
 
 const casesByCountySchema = new Schema({
   uniqueKey: String,
@@ -30,6 +32,7 @@ const casesByCountySchema = new Schema({
   divisionFIPS: String,
   stateFIPS: String,
   countyFIPS: String,
+  population: Number,
   dataPull: {
     type: Schema.Types.ObjectId,
     ref: "DataPull"
@@ -53,30 +56,30 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   const sortQuery = sort === "count" ? {
     currentCasesCount: -1
   } : {
-      currentMovingAvg: -1
-    };
+    currentMovingAvg: -1
+  };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
   const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment().subtract(2, "d").format("YYYYMMDD");
 
   return await this.aggregate([{
-    $match: match
-  },
-  {
-    $unwind: "$casesByDate"
-  },
-  {
-    $addFields: {
-      currentCasesCount: {
-        $toInt: `$casesByDate.${formattedDate}.count`
-      },
-      currentMovingAvg: {
-        $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
+      $match: match
+    },
+    {
+      $unwind: "$casesByDate"
+    },
+    {
+      $addFields: {
+        currentCasesCount: {
+          $toInt: `$casesByDate.${formattedDate}.count`
+        },
+        currentMovingAvg: {
+          $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
+        }
       }
+    },
+    {
+      $sort: sortQuery
     }
-  },
-  {
-    $sort: sortQuery
-  }
   ]);
 };
 
@@ -94,38 +97,58 @@ const createDateList = (startDate, endDate) => {
 
 casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = moment().subtract(1, "day").format("YYYYMMDD"), stateName = null, countyName = null) {
   const addFieldsExpression = {};
-  const groupExpression = { _id: "Totals" };
-  const projectionExpression = { byDate: {} };
+  const groupExpression = {
+    _id: "Totals"
+  };
+  const projectionExpression = {
+    byDate: {}
+  };
   const dateStrings = createDateList(startDate, endDate);
 
   if (moment(startDate, "YYYYMMDD").isAfter(moment("20200122", "YYYYMMDD"))) {
     const leadingDay = moment(startDate, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
-    addFieldsExpression[`cases_${leadingDay}`] = { $toInt: `$casesByDate.${leadingDay}.count` };
-    addFieldsExpression[`deaths_${leadingDay}`] = { $toInt: `$deathsByDate.${leadingDay}.count` };
-    groupExpression[`${leadingDay}_cases`] = { $sum: `$cases_${leadingDay}` };
-    groupExpression[`${leadingDay}_deaths`] = { $sum: `$deaths_${leadingDay}` };
+    addFieldsExpression[`cases_${leadingDay}`] = {
+      $toInt: `$casesByDate.${leadingDay}.count`
+    };
+    addFieldsExpression[`deaths_${leadingDay}`] = {
+      $toInt: `$deathsByDate.${leadingDay}.count`
+    };
+    groupExpression[`${leadingDay}_cases`] = {
+      $sum: `$cases_${leadingDay}`
+    };
+    groupExpression[`${leadingDay}_deaths`] = {
+      $sum: `$deaths_${leadingDay}`
+    };
   }
 
   dateStrings.map((d, i) => {
     const precedingDay = moment(d, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
-    addFieldsExpression[`cases_${d}`] = { $toInt: `$casesByDate.${d}.count` };
-    addFieldsExpression[`deaths_${d}`] = { $toInt: `$deathsByDate.${d}.count` };
-    groupExpression[`${d}_cases`] = { $sum: `$cases_${d}` };
-    groupExpression[`${d}_deaths`] = { $sum: `$deaths_${d}` };
+    addFieldsExpression[`cases_${d}`] = {
+      $toInt: `$casesByDate.${d}.count`
+    };
+    addFieldsExpression[`deaths_${d}`] = {
+      $toInt: `$deathsByDate.${d}.count`
+    };
+    groupExpression[`${d}_cases`] = {
+      $sum: `$cases_${d}`
+    };
+    groupExpression[`${d}_deaths`] = {
+      $sum: `$deaths_${d}`
+    };
     projectionExpression.byDate[d] = {
       cases: `$${d}_cases`,
-      casesNew: { $subtract: [`$${d}_cases`, `$${precedingDay}_cases`] },
+      casesNew: {
+        $subtract: [`$${d}_cases`, `$${precedingDay}_cases`]
+      },
       casesRate: {
-        $cond: [
-          {
+        $cond: [{
             $eq: [
               `$${precedingDay}_cases`, 0
             ]
           },
           0,
           {
-            $divide: [
-              {
+            $divide: [{
                 $subtract: [
                   `$${d}_cases`,
                   `$${precedingDay}_cases`
@@ -137,18 +160,18 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
         ]
       },
       deaths: `$${d}_deaths`,
-      deathsNew: { $subtract: [`$${d}_deaths`, `$${precedingDay}_deaths`] },
+      deathsNew: {
+        $subtract: [`$${d}_deaths`, `$${precedingDay}_deaths`]
+      },
       deathsRate: {
-        $cond: [
-          {
+        $cond: [{
             $eq: [
               `$${precedingDay}_deaths`, 0
             ]
           },
           0,
           {
-            $divide: [
-              {
+            $divide: [{
                 $subtract: [
                   `$${d}_deaths`,
                   `$${precedingDay}_deaths`
@@ -162,8 +185,7 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
     }
   });
 
-  const aggregationPipeline = [
-    {
+  const aggregationPipeline = [{
       $unwind: "$casesByDate"
     },
     {
@@ -182,10 +204,20 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
 
   if (stateName) {
 
-    const matchQuery = { $match: { state: { $regex: stateName, $options: "i" } } };
+    const matchQuery = {
+      $match: {
+        state: {
+          $regex: stateName,
+          $options: "i"
+        }
+      }
+    };
 
     if (countyName) {
-      matchQuery.$match.county = { $regex: countyName, $options: "i" };
+      matchQuery.$match.county = {
+        $regex: countyName,
+        $options: "i"
+      };
     }
     aggregationPipeline.unshift(matchQuery);
   }
@@ -199,49 +231,49 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
   const sortQuery = sort === "caseCount" ? {
     totalCases: dir
   } : {
-      totalDeaths: dir
-    };
+    totalDeaths: dir
+  };
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
 
   return await this.aggregate([{
-    $unwind: "$casesByDate"
-  },
-  {
-    $unwind: "$deathsByDate"
-  },
-  {
-    $addFields: {
-      currentCasesCount: {
-        $toInt: `$casesByDate.${formattedDate}.count`
-      },
-      currentDeathsCount: {
-        $toInt: `$deathsByDate.${formattedDate}.count`
-      },
-    }
-  },
-  {
-    $group: {
-      _id: {
-        state: "$state"
-      },
-      totalCases: {
-        $sum: "$currentCasesCount"
-      },
-      totalDeaths: {
-        $sum: "$currentDeathsCount"
+      $unwind: "$casesByDate"
+    },
+    {
+      $unwind: "$deathsByDate"
+    },
+    {
+      $addFields: {
+        currentCasesCount: {
+          $toInt: `$casesByDate.${formattedDate}.count`
+        },
+        currentDeathsCount: {
+          $toInt: `$deathsByDate.${formattedDate}.count`
+        },
       }
+    },
+    {
+      $group: {
+        _id: {
+          state: "$state"
+        },
+        totalCases: {
+          $sum: "$currentCasesCount"
+        },
+        totalDeaths: {
+          $sum: "$currentDeathsCount"
+        }
+      }
+    },
+    {
+      $project: {
+        state: "$_id.state",
+        totalCases: 1,
+        totalDeaths: 1
+      }
+    },
+    {
+      $sort: sortQuery
     }
-  },
-  {
-    $project: {
-      state: "$_id.state",
-      totalCases: 1,
-      totalDeaths: 1
-    }
-  },
-  {
-    $sort: sortQuery
-  }
   ]);
 };
 
@@ -382,6 +414,28 @@ casesByCountySchema.statics.addFIPS = async function (stateName, countyName, reg
 
   } catch (err) {
     logError(`CasesByCounty::addFIPS::error adding FIPS data to ${countyName}: ${err}`);
+  }
+}
+
+casesByCountySchema.statics.updatePopulation = async function (population, stateFIPS, countyFIPS) {
+  try {
+    let county = await CasesByCounty.findOne({
+      stateFIPS,
+      countyFIPS
+    });
+
+    //dbg("County result", county);
+    if (county) {
+      //dbg("Got a county!");
+      county.population = population;
+
+      return await county.save();
+    } else {
+      console.log(`missing county State FIPS: ${stateFIPS}, County FIPS: ${countyFIPS}`);
+    }
+
+  } catch (err) {
+    logError(`CasesByCounty::updatePopulation::error adding population data to State FIPS: ${stateFIPS}, County FIPS: ${countyFIPS}: ${err}`);
   }
 }
 
