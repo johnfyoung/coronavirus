@@ -194,9 +194,9 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
   return await this.aggregate(aggregationPipeline);
 };
 
-casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCount", direction = "desc", dateStr = "") {
+casesByCountySchema.statics.getStateCasesSorted = async function (sort = "cases", direction = "desc", dateStr = "") {
   const dir = direction === "desc" ? -1 : 1;
-  const sortQuery = sort === "caseCount" ? {
+  const sortQuery = sort === "cases" ? {
     totalCases: dir
   } : {
       totalDeaths: dir
@@ -216,7 +216,7 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
       },
       currentDeathsCount: {
         $toInt: `$deathsByDate.${formattedDate}.count`
-      },
+      }
     }
   },
   {
@@ -229,6 +229,9 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
       },
       totalDeaths: {
         $sum: "$currentDeathsCount"
+      },
+      totalPopulation: {
+        $sum: "$population"
       }
     }
   },
@@ -236,7 +239,30 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "caseCo
     $project: {
       state: "$_id.state",
       totalCases: 1,
-      totalDeaths: 1
+      totalDeaths: 1,
+      totalPopulation: 1,
+      totalCasesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$totalPopulation",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$totalCases",
+              {
+                $divide: [
+                  "$totalPopulation",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      }
     }
   },
   {
