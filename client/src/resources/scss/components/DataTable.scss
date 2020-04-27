@@ -1,0 +1,35 @@
+.data-table {
+    td.data-table-number {
+        text-align: right;
+    }
+
+    th {
+        button {
+            .arrow-down::after {
+                content: "";
+                font-family: "FontAwesome";
+                text-decoration: none;
+                margin-left: 5px;
+            }
+        
+            .arrow-up::after {
+                content: "";
+                font-family: "FontAwesome";
+                text-decoration: none;
+                margin-left: 5px;
+            }
+
+            &:focus,
+            &:hover {
+                .arrow-down::after {
+                    text-decoration: none;
+                }
+            
+                .arrow-up::after {
+                    text-decoration: none;
+                }
+            }
+        }
+    }
+    
+}

@@ -2,7 +2,7 @@ import mongoose, {
   Schema
 } from "mongoose";
 import {
-  fieldNamesByCounty
+  sortMethods
 } from "../config/constants";
 import {
   logError,
@@ -12,9 +12,6 @@ import moment from "moment";
 import {
   harmonicMean
 } from "simple-statistics";
-import {
-  add
-} from "winston";
 
 const casesByCountySchema = new Schema({
   uniqueKey: String,
@@ -226,13 +223,29 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
   return await this.aggregate(aggregationPipeline);
 };
 
-casesByCountySchema.statics.getStateCasesSorted = async function (sort = "cases", direction = "desc", dateStr = "") {
+casesByCountySchema.statics.getStateCasesSorted = async function (sort = sortMethods.CASES, direction = "desc", dateStr = "") {
   const dir = direction === "desc" ? -1 : 1;
-  const sortQuery = sort === "cases" ? {
-    totalCases: dir
-  } : {
-      totalDeaths: dir
-    };
+  const sortQuery = {};
+  switch (sort) {
+    case sortMethods.NAME:
+      sortQuery.state = dir;
+      break;
+    case sortMethods.CASES:
+      sortQuery.totalCases = dir;
+      break;
+    case sortMethods.DEATHS:
+      sortQuery.totalDeaths = dir;
+      break;
+    case sortMethods.CASESPER100K:
+      sortQuery.totalCasesPer100k = dir;
+      break;
+    case sortMethods.DEATHSPER100K:
+      sortQuery.totalDeathsPer100k = dir;
+      break;
+    default:
+      sortQuery.totalCases = -1;
+  }
+
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
 
   return await this.aggregate([{
@@ -285,6 +298,28 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = "cases"
           {
             $divide: [
               "$totalCases",
+              {
+                $divide: [
+                  "$totalPopulation",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      totalDeathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$totalPopulation",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$totalDeaths",
               {
                 $divide: [
                   "$totalPopulation",

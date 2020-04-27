@@ -11,7 +11,7 @@ import ReactGA from "react-ga";
 
 class HomePage extends Component {
   state = {
-    sort: "caseCount",
+    sort: "deaths",
     sortDirection: "desc",
     sortedData: []
   }
@@ -135,8 +135,20 @@ class HomePage extends Component {
   //   }
   // }
 
-  handleSortClick = (sort, ev) => {
+  handleSortClick = (newSort, ev) => {
     ev.preventDefault();
+    const { getStatesSorted } = this.props;
+    let { sort, sortDirection } = this.state;
+
+    if (sort === newSort) {
+      sortDirection = sortDirection === "desc" ? "asc" : "desc";
+    }
+
+    getStatesSorted(newSort, sortDirection).then(result => {
+      //dbg.log("Got the sortedStates data", result);
+      this.setState({ sort: newSort, sortDirection, sortedData: result });
+    });
+
   };
 
   // retrieveStates = () => {
@@ -153,33 +165,56 @@ class HomePage extends Component {
 
 
   render() {
-    const { sortedData } = this.state;
+    const { sort, sortDirection, sortedData } = this.state;
 
     return (
       <ConnectedPage pageClass="page-home" nav={this.props.nav} >
         <div className="row">
           <div className="col-12">
             <h1>Coronavirus Stats</h1>
-            <div>Just trying to get stats all in one place</div>
           </div>
         </div>
         <div className="row">
           <div className="col-12">
             {sortedData.length > 0 ? (
-              <table className="table table-striped">
+              <table className="table table-striped data-table">
                 <thead className="thead-dark">
                   <tr>
-                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>State</span></button></th>
-                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
-                    <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Death Count</span></button></th>
+                    <th scope="col">
+                      <button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}>
+                        <span className={(sort === "name" ? (sortDirection === "desc" ? "arrow-down" : "arrow-up") : "")}>State</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("cases", ev)}>
+                        <span className={(sort === "cases" ? (sortDirection === "desc" ? "arrow-down" : "arrow-up") : "")}>Case Count</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("deaths", ev)}>
+                        <span className={(sort === "deaths" ? (sortDirection === "desc" ? "arrow-down" : "arrow-up") : "")}>Death Count</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("casesPer100k", ev)}>
+                        <span className={(sort === "casesPer100k" ? (sortDirection === "desc" ? "arrow-down" : "arrow-up") : "")}>Cases Per 100k</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("deathsPer100k", ev)}>
+                        <span className={(sort === "deathsPer100k" ? (sortDirection === "desc" ? "arrow-down" : "arrow-up") : "")}>Deaths Per 100k</span>
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedData.map(stateData => (
                     <tr key={stateData.state}>
                       <td><Link to={`/state/${stateData.state}`} className="btn btn-link">{stateData.state}</Link></td>
-                      <td>{stateData.totalCases}</td>
-                      <td>{stateData.totalDeaths}</td>
+                      <td className="data-table-number">{stateData.totalCases.toLocaleString()}</td>
+                      <td className="data-table-number">{stateData.totalDeaths.toLocaleString()}</td>
+                      <td className="data-table-number">{Math.round(stateData.totalCasesPer100k).toLocaleString()}</td>
+                      <td className="data-table-number">{Math.round(stateData.totalDeathsPer100k).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

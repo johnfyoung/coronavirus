@@ -1,3 +1,1 @@
-export default {
-  siteName: "MERN Starter"
-};
+export * from "./constants";
