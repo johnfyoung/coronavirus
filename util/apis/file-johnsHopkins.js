@@ -6,6 +6,9 @@ require("dotenv").config();
 const csvRootPath =
   "https://api.github.com/repos/CSSEGISandData/COVID-19/contents/csse_covid_19_data/";
 
+const dataRootPath =
+  "https://api.github.com/repos/CSSEGISandData/COVID-19/git/blobs/";
+
 const githubAPIPath =
   "https://api.github.com/repos/CSSEGISandData/COVID-19/commits";
 
@@ -14,25 +17,30 @@ const remoteFiles = {
   intl: {
     timeSeriesConfirmedCases: {
       type: "cases",
-      path: "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+      path: "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+      sha: "d4befad4009f63c91f938f7f57c6ae91d05d0d6c"
     },
     timeSeriesDeaths: {
       type: "deaths",
-      path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+      path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv",
+      sha: "3119b06d4cc6e861df476d451343a6cce0a1243f"
     },
     timeSeriesRecovered: {
       type: "recovered",
-      path: "csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+      path: "csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
+      sha: "3776b4ffa217e678c7b9567c63529a268422a77a"
     }
   },
   us: {
     timeSeriesConfirmedCases: {
       type: "cases",
-      path: "csse_covid_19_time_series/time_series_covid19_confirmed_US.csv"
+      path: "csse_covid_19_time_series/time_series_covid19_confirmed_US.csv",
+      sha: "5eeb3dcae5439d1496d7ea4271a00c1e5d04cd9a"
     },
     timeSeriesDeaths: {
       type: "deaths",
-      path: "csse_covid_19_time_series/time_series_covid19_deaths_US.csv"
+      path: "csse_covid_19_time_series/time_series_covid19_deaths_US.csv",
+      sha: "5c45cfdbf529dbb0a24b5406e40c91b1f31820b3"
     }
   }
 };
@@ -73,7 +81,7 @@ export const johnsHopkinsRetrieveData = async () => {
       result[key] = {};
       for (const filename of Object.keys(remoteFiles[key])) {
         const response = await axios.get(
-          `${csvRootPath}${remoteFiles[key][filename].path}`,
+          `${dataRootPath}${remoteFiles[key][filename].sha}`,
           {
             headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN }
           }
