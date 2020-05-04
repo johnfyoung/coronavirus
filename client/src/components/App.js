@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Router } from "react-router-dom";
 
 import moment from "moment";
-import ReactGA from 'react-ga';
+import ReactGA from "react-ga";
 
 import { dbg, history } from "../utils";
 
@@ -13,7 +13,7 @@ import {
   installActions,
   logActions,
   geolocActions,
-  statsActions
+  statsActions,
 } from "../redux/actions";
 
 import Header from "../components/presentation/parts/Header";
@@ -42,23 +42,40 @@ class App extends Component {
     this.props.announce("Here is a site wide announcement");
 
     this.props.getLastUpdated().then(() => {
-      this.props.announce(`Last update: ${moment(this.props.statsLastUpdated).format("MMM DD YYYY h:mm a")}`);
+      this.props.announce(
+        `Last update: ${moment(this.props.statsLastUpdated).format(
+          "MMM DD YYYY h:mm a"
+        )}`
+      );
     });
 
     ReactGA.initialize(process.env.REACT_APP_GA);
 
     if (!this.props.geoloc && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(this.handleGeoLocation, function () { /*no op*/ });
+      navigator.geolocation.getCurrentPosition(
+        this.handleGeoLocation,
+        function() {
+          /*no op*/
+        }
+      );
     }
     history.listen(this.handleLocationChange);
 
     this.handleLocationChange(history.location, "PUSH");
   };
 
-  handleGeoLocation = position => {
-    this.props.lookupUserLocation(position.coords.latitude, position.coords.longitude).then((data) => {
-      ReactGA.event({ category: "GeoLoc", action: "lookup", label: `${data.address.city}, ${data.address.county}, ${data.address.state}` });
-    });
+  handleGeoLocation = (position) => {
+    this.props
+      .lookupUserLocation(position.coords.latitude, position.coords.longitude)
+      .then((data) => {
+        if (data) {
+          ReactGA.event({
+            category: "GeoLoc",
+            action: "lookup",
+            label: `${data.address.city}, ${data.address.county}, ${data.address.state}`,
+          });
+        }
+      });
   };
 
   handleLocationChange = (location, action) => {
@@ -102,7 +119,7 @@ class App extends Component {
 
   getActiveNavKey = (menu, location) => {
     const active = Object.keys(menu).filter(
-      key => menu[key].path === location.pathname
+      (key) => menu[key].path === location.pathname
     );
 
     return active.length > 0 ? active[0] : null;
@@ -125,7 +142,7 @@ class App extends Component {
       "/register/",
       "/install",
       "/state/:state",
-      "/county/:state/:county"
+      "/county/:state/:county",
     ];
 
     const { geoloc } = this.props;
@@ -139,7 +156,14 @@ class App extends Component {
           />
         )}
 
-        {geoloc ? <div className="geolocation-bar alert-secondary text-center py-3"><strong>Your location:</strong> {geoloc.address.city}, {geoloc.address.county} County, {geoloc.address.state}</div> : ""}
+        {geoloc ? (
+          <div className="geolocation-bar alert-secondary text-center py-3">
+            <strong>Your location:</strong> {geoloc.address.city},{" "}
+            {geoloc.address.county} County, {geoloc.address.state}
+          </div>
+        ) : (
+          ""
+        )}
 
         <Router history={history}>
           <Header nav={topNav} />
@@ -150,7 +174,10 @@ class App extends Component {
           <TransitionRoute exact path="/profile" component={ProfilePage} />
           <TransitionRoute exact path="/install" component={InstallPage} />
           <TransitionRoute path="/state/:state" component={StatePage} />
-          <TransitionRoute path="/county/:state/:county" component={GraphPage} />
+          <TransitionRoute
+            path="/county/:state/:county"
+            component={GraphPage}
+          />
           <TransitionRoute routePaths={routePaths} component={NotFoundPage} />
           <Footer />
         </Router>
@@ -166,7 +193,7 @@ const mapStateToProps = ({ alert, auth, nav, stats, service }) => {
     nav,
     appName: nav.brand.label,
     geoloc: service.geoloc,
-    statsLastUpdated: stats.lastUpdated
+    statsLastUpdated: stats.lastUpdated,
   };
 };
 
@@ -178,7 +205,7 @@ const actionCreators = {
   checkInstallation: installActions.checkInstallation,
   captureUserEvent: logActions.captureUserEvent,
   getLastUpdated: statsActions.getLastUpdated,
-  lookupUserLocation: geolocActions.lookupUserLocation
+  lookupUserLocation: geolocActions.lookupUserLocation,
 };
 
 const ConnectedApp = connect(mapStateToProps, actionCreators)(App);

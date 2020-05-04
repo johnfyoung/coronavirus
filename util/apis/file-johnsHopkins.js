@@ -17,32 +17,34 @@ const remoteFiles = {
   intl: {
     timeSeriesConfirmedCases: {
       type: "cases",
-      path: "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
-      sha: "d4befad4009f63c91f938f7f57c6ae91d05d0d6c"
+      path:
+        "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+      sha: "d4befad4009f63c91f938f7f57c6ae91d05d0d6c",
     },
     timeSeriesDeaths: {
       type: "deaths",
       path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv",
-      sha: "3119b06d4cc6e861df476d451343a6cce0a1243f"
+      sha: "3119b06d4cc6e861df476d451343a6cce0a1243f",
     },
     timeSeriesRecovered: {
       type: "recovered",
-      path: "csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
-      sha: "3776b4ffa217e678c7b9567c63529a268422a77a"
-    }
+      path:
+        "csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
+      sha: "3776b4ffa217e678c7b9567c63529a268422a77a",
+    },
   },
   us: {
     timeSeriesConfirmedCases: {
       type: "cases",
       path: "csse_covid_19_time_series/time_series_covid19_confirmed_US.csv",
-      sha: "5eeb3dcae5439d1496d7ea4271a00c1e5d04cd9a"
+      sha: "5eeb3dcae5439d1496d7ea4271a00c1e5d04cd9a",
     },
     timeSeriesDeaths: {
       type: "deaths",
       path: "csse_covid_19_time_series/time_series_covid19_deaths_US.csv",
-      sha: "5c45cfdbf529dbb0a24b5406e40c91b1f31820b3"
-    }
-  }
+      sha: "5c45cfdbf529dbb0a24b5406e40c91b1f31820b3",
+    },
+  },
 };
 
 /**
@@ -53,7 +55,7 @@ export const johnsHopkinsGetLatestUpdateTime = async () => {
 
   try {
     const response = await axios.get(githubAPIPath, {
-      headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN }
+      headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN },
     });
 
     if (!isEmpty(response.data) && response.data.length) {
@@ -83,15 +85,19 @@ export const johnsHopkinsRetrieveData = async () => {
         const response = await axios.get(
           `${dataRootPath}${remoteFiles[key][filename].sha}`,
           {
-            headers: { Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN }
+            headers: {
+              Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN,
+            },
           }
         );
 
-        const buffer = new Buffer(response.data.content, response.data.encoding);
+        const buffer = Buffer.from(response.data.content);
         result[key][filename] = {
-          type: remoteFiles[key][filename].type
+          type: remoteFiles[key][filename].type,
         };
-        result[key][filename].data = await csvParse.parse(buffer.toString());
+        result[key][filename].data = await csvParse.parse(
+          buffer.toString(response.data.encoding)
+        );
       }
     }
   } catch (err) {
