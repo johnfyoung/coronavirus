@@ -56,10 +56,11 @@ router.get("/us/cases-by-county-sorted/:stateName/:sort?", async (req, res) => {
     res.status(500).send("Unexpected failure gathering data");
   }
 });
-router.get("/us/cases-by-state-sorted/:sort?/:direction?", async (req, res) => {
+router.get("/us/cases-by-state-sorted", async (req, res) => {
   const result = await statsController.getStatesSorted(
-    req.params.sort,
-    req.params.direction
+    req.query.sort,
+    req.query.direction,
+    req.query.date
   );
 
   if (result) {

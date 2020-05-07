@@ -252,8 +252,8 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = sortMet
       sortQuery.totalCases = -1;
   }
 
-  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
-  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
+  const mostRecent = await Config.findOne({ name: "mostRecentStats" });
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
 
   return await this.aggregate([{
     $unwind: "$casesByDate"

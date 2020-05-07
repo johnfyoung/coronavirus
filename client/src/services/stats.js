@@ -62,7 +62,12 @@ const getCountiesSorted = (stateName, sort = "count") => {
 }
 
 const getStatesSorted = (sort = "casesCount", direction = "desc") => {
-    return axios.get(`/api/stats/us/cases-by-state-sorted/${sort}/${direction}`).then(res => {
+    return axios.get(`/api/stats/us/cases-by-state-sorted`, {
+        params: {
+            sort,
+            direction
+        }
+    }).then(res => {
         dbg.log("statsServices::getStatesSorted response", res);
 
         if (res.status === 200) {
