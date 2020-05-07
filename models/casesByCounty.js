@@ -13,6 +13,8 @@ import {
   harmonicMean
 } from "simple-statistics";
 
+import { Config } from "./config";
+
 const casesByCountySchema = new Schema({
   uniqueKey: String,
   uid: Number,
@@ -21,6 +23,7 @@ const casesByCountySchema = new Schema({
   region: String,
   lat: Number,
   long: Number,
+  mostRecent: String,
   casesByDate: Array,
   deathsByDate: Array,
   regionName: String,
@@ -92,7 +95,10 @@ const createDateList = (startDate, endDate) => {
   return dates;
 };
 
-casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = moment().subtract(1, "day").format("YYYYMMDD"), stateName = null, countyName = null) {
+casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = "", stateName = null, countyName = null) {
+  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
+  endDate = endDate ? moment(endDate).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
+
   const addFieldsExpression = {};
   const groupExpression = {
     _id: "Totals"
@@ -246,7 +252,8 @@ casesByCountySchema.statics.getStateCasesSorted = async function (sort = sortMet
       sortQuery.totalCases = -1;
   }
 
-  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
+  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
 
   return await this.aggregate([{
     $unwind: "$casesByDate"
@@ -360,9 +367,10 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
       let sumOfRates = 0;
       const rates = [];
 
+      let lastDateKey = "";
       dates.forEach((d, i) => {
         const dateKey = moment(d, "M/D/YY").format("YYYYMMDD");
-
+        lastDateKey = dateKey;
         if (dateKey !== "Invalid date") {
           let rate = 0;
 
@@ -387,6 +395,7 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
           };
         }
       });
+      data[regionID]["mostRecent"] = lastDateKey;
     });
   }
 
@@ -397,18 +406,22 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
 
   const formattedData = this.formatDataPull(dataObj);
   dbg("Updating CasesByCounty");
+  let mostRecent = "";
   try {
     await Promise.all(Object.keys(formattedData).map(async key => {
       let county = await CasesByCounty.findOne({
         uniqueKey: key
       });
 
+      // dbg("most recent", formattedData[key].mostRecent);
+      mostRecent = mostRecent === "" ? formattedData[key].mostRecent : mostRecent;
+
       //dbg("County result");
       if (county) {
         //dbg(`Got a county: ${county.county}, ${county.state}`, formattedData[key].cases);
-
         county.casesByDate = formattedData[key].cases;
         county.deathsByDate = formattedData[key].deaths;
+        county.mostRecent = formattedData[key].mostRecent;
         county.dataPull = dPull;
       } else {
         county = new CasesByCounty({
@@ -421,12 +434,15 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
           long: formattedData[key].long,
           casesByDate: formattedData[key].cases,
           deathsByDate: formattedData[key].deaths,
+          mostRecent: formattedData[key].mostRecent,
           dataPull: dPull
         });
       }
 
       return await county.save();
     }));
+
+    await Config.findOneAndUpdate({ name: "mostRecentStats" }, { value: mostRecent }, { new: true, upsert: true });
   } catch (err) {
     logError(
       `CasesByCounty::updateFromDataPull::Error storing data from datapull = ${err}`
