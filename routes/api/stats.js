@@ -44,10 +44,11 @@ router.get("/us/cases-by-county/:stateName/:countyName?", async (req, res) => {
   }
 });
 
-router.get("/us/cases-by-county-sorted/:stateName/:sort?", async (req, res) => {
+router.get("/us/cases-by-county-sorted/:stateName", async (req, res) => {
   const result = await statsController.getCountiesSorted(
     req.params.stateName,
-    req.params.sort
+    req.query.sort,
+    req.query.date
   );
 
   if (result) {

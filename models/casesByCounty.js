@@ -58,8 +58,9 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   } : {
       currentMovingAvg: -1
     };
-  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment().format("YYYYMMDD");
-  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment().subtract(2, "d").format("YYYYMMDD");
+  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
+  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment(mostRecent).subtract(2, "d").format("YYYYMMDD");
 
   return await this.aggregate([{
     $match: match
