@@ -1,24 +1,41 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
+import moment from "moment";
 
 import ConnectedPage from "../../connected/templates/ConnectedPage";
+import TotalsPage from "../../presentation/parts/TotalsGraph";
 import { dbg, history } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
 
 class GraphPage extends Component {
     state = {
         sortedCounties: null,
+        stateTotals: [],
         dataMax: 0
     }
 
     componentDidMount() {
-        this.props.getCounties(this.props.match.params.state).then(data => {
-            dbg.log("StatePage got data", data);
-            if (data && data.length > 0) {
-                this.setState({ sortedCounties: data })
+        const { getCounties, getStateTotals } = this.props;
+        getCounties(this.props.match.params.state).then(byCountyData => {
+            dbg.log("StatePage got data", byCountyData);
+            if (byCountyData && byCountyData.length > 0) {
+                this.setState({ sortedCounties: byCountyData }, () => {
+                    getStateTotals(this.props.match.params.state).then(stateTotals => {
+                        if (stateTotals) {
+                            this.setState({ stateTotals: this.formatStateTotals(stateTotals) });
+                        }
+                    })
+                })
             }
         });
+    }
+
+    formatStateTotals(unFormattedData) {
+        return Object.keys(unFormattedData).map(k => ({
+            name: moment(k, "YYYYMMDD").format("MMM-DD"),
+            ...unFormattedData[k]
+        }));
     }
 
     render() {
@@ -30,6 +47,9 @@ class GraphPage extends Component {
                         {match && match.params ? (
                             <div>
                                 <h1>Stats for {match.params.state.charAt(0).toUpperCase() + match.params.state.slice(1)}</h1>
+                                {this.state.stateTotals.length > 0 ? (
+                                    <TotalsPage data={this.state.stateTotals} />
+                                ) : ""}
                                 {this.state.sortedCounties && this.state.sortedCounties.length > 0 ? (
                                     <table className="table table-striped">
                                         <thead className="thead-dark">
@@ -123,7 +143,8 @@ const mapStateToProps = ({ service, loading, stats }) => ({
 });
 
 const actionCreators = {
-    getCounties: statsActions.getCountiesSorted
+    getCounties: statsActions.getCountiesSorted,
+    getStateTotals: statsActions.getCasesByState
 };
 
 export default connect(

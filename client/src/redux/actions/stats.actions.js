@@ -64,6 +64,27 @@ const getCasesByCounty = (stateName, countyName) => {
     }
 }
 
+const getCasesByState = (stateName) => {
+    return dispatch => {
+        dispatch({ type: statsConstants.STATS_GET_CASESBYSTATE });
+        dispatch({ type: serviceConstants.POSTBACK_BEGIN });
+
+        return statsServices
+            .getTotals(stateName)
+            .then(data => {
+                dispatch({ type: serviceConstants.POSTBACK_END });
+                dispatch({ type: statsConstants.STATS_SUCCESS });
+                return data;
+            })
+            .catch(err => {
+                dispatch({ type: serviceConstants.POSTBACK_ERROR });
+                dispatch({ type: statsConstants.STATS_FAILURE });
+            }).finally(() => {
+                dispatch({ type: serviceConstants.POSTBACK_END });
+            });
+    }
+};
+
 const getLastUpdated = () => {
     return dispatch => {
         dispatch({ type: serviceConstants.POSTBACK_BEGIN });
@@ -132,6 +153,7 @@ export const statsActions = {
     selectState,
     selectCounty,
     getCasesByCounty,
+    getCasesByState,
     getCountiesSorted,
     getLastUpdated,
     getStatesSorted

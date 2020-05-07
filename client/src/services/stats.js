@@ -86,6 +86,28 @@ const getStatesSorted = (sort = "casesCount", direction = "desc") => {
     })
 }
 
+const getTotals = (state, county, start, end) => {
+    return axios.get(`/api/stats/us/cases-totals`, {
+        params: {
+            state,
+            county,
+            start,
+            end
+        }
+    }).then(res => {
+        dbg.log("statsServices::getTotals response", res);
+
+        if (res.status === 200) {
+            return res.data[0].byDate;
+        }
+    }).catch(error => {
+        dbg.log("statsServices::getTotals error", error);
+        const err = Error("Stats error");
+        err.data = error.response.data;
+        throw err;
+    })
+}
+
 const getLastUpdated = () => {
     return axios.get("/api/stats/us/last-updated").then(res => {
         dbg.log("statsServices::getLastUpdated response", res);
@@ -106,5 +128,6 @@ export const statsServices = {
     getCasesByCounty,
     getLastUpdated,
     getCountiesSorted,
-    getStatesSorted
+    getStatesSorted,
+    getTotals
 }

@@ -72,10 +72,10 @@ router.get("/us/cases-by-state-sorted", async (req, res) => {
 });
 router.get("/us/cases-totals", async (req, res) => {
   const result = await statsController.getTotals(
-    req.query.start,
-    req.query.end,
     req.query.state,
-    req.query.county
+    req.query.county,
+    req.query.start,
+    req.query.end
   );
 
   if (result) {

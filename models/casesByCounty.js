@@ -97,9 +97,9 @@ const createDateList = (startDate, endDate) => {
   return dates;
 };
 
-casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = "", stateName = null, countyName = null) {
+casesByCountySchema.statics.getTotals = async function (stateName = null, countyName = null, startDate = "20200123", endDate = "", ) {
   const mostRecent = await Config.findOne({ name: "mostRecentStats" });
-  endDate = endDate ? moment(endDate).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
+  endDate = endDate != "" ? moment(endDate).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
 
   const addFieldsExpression = {};
   const groupExpression = {
@@ -108,6 +108,7 @@ casesByCountySchema.statics.getTotals = async function (startDate = "20200122", 
   const projectionExpression = {
     byDate: {}
   };
+
   const dateStrings = createDateList(startDate, endDate);
 
   if (moment(startDate, "YYYYMMDD").isAfter(moment("20200122", "YYYYMMDD"))) {

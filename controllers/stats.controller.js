@@ -112,9 +112,9 @@ export const statsController = {
 
     return null;
   },
-  getTotals: async (startDate, endDate, stateName, countyName) => {
+  getTotals: async (stateName, countyName, startDate, endDate) => {
     try {
-      return CasesByCounty.getTotals(startDate, endDate, stateName, countyName);
+      return CasesByCounty.getTotals(stateName, countyName, startDate, endDate);
     } catch (err) {
       `statsController::getTotals::Error aggregating data ${err}`
     }
