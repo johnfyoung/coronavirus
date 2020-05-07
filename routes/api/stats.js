@@ -47,8 +47,8 @@ router.get("/us/cases-by-county/:stateName/:countyName?", async (req, res) => {
 router.get("/us/cases-by-county-sorted/:stateName", async (req, res) => {
   const result = await statsController.getCountiesSorted(
     req.params.stateName,
-    req.query.sort,
-    req.query.date
+    req.query.sort ? req.query.sort : "count",
+    req.query.date ? req.query.date : ""
   );
 
   if (result) {

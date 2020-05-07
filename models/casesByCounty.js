@@ -58,9 +58,10 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
   } : {
       currentMovingAvg: -1
     };
-  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
-  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
-  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment(mostRecent).subtract(2, "d").format("YYYYMMDD");
+
+  const mostRecent = await Config.findOne({ name: "mostRecentStats" });
+  const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
+  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment(mostRecent.value).subtract(2, "d").format("YYYYMMDD");
 
   return await this.aggregate([{
     $match: match
@@ -97,8 +98,8 @@ const createDateList = (startDate, endDate) => {
 };
 
 casesByCountySchema.statics.getTotals = async function (startDate = "20200122", endDate = "", stateName = null, countyName = null) {
-  const mostRecent = await Config.findOne({ name: "mostrecentStats" }).value;
-  endDate = endDate ? moment(endDate).format("YYYYMMDD") : moment(mostRecent).format("YYYYMMDD");
+  const mostRecent = await Config.findOne({ name: "mostRecentStats" });
+  endDate = endDate ? moment(endDate).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
 
   const addFieldsExpression = {};
   const groupExpression = {

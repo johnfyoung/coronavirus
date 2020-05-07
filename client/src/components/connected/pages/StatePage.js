@@ -15,7 +15,7 @@ class GraphPage extends Component {
     componentDidMount() {
         this.props.getCounties(this.props.match.params.state).then(data => {
             dbg.log("StatePage got data", data);
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 this.setState({ sortedCounties: data })
             }
         });
