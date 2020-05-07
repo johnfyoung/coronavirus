@@ -394,17 +394,19 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
 };
 
 casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull) {
-  dbg("Updating CasesByCounty");
+
   const formattedData = this.formatDataPull(dataObj);
+  dbg("Updating CasesByCounty");
   try {
     await Promise.all(Object.keys(formattedData).map(async key => {
       let county = await CasesByCounty.findOne({
         uniqueKey: key
       });
 
-      //dbg("County result", county);
+      //dbg("County result");
       if (county) {
-        //dbg("Got a county!");
+        //dbg(`Got a county: ${county.county}, ${county.state}`, formattedData[key].cases);
+
         county.casesByDate = formattedData[key].cases;
         county.deathsByDate = formattedData[key].deaths;
         county.dataPull = dPull;

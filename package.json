@@ -18,6 +18,9 @@
     "getName": "node -p \"require('./package.json').name\"",
     "getDisplayName": "node -p \"require('./package.json').displayName\""
   },
+  "engines": {
+    "node": ">=12.16.2"
+  },
   "author": "John Young",
   "license": "ISC",
   "googleAnalytics": "UA-3144239-14",

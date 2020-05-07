@@ -124,6 +124,7 @@ export const statsController = {
   },
   retrieveJohnsHopkins: async () => {
     const lastUpdated = await johnsHopkinsGetLatestUpdateTime();
+    //dbg("Last Updated:", lastUpdated);
     let result = {
       meta: {
         status: 0,

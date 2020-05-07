@@ -4,7 +4,7 @@ import { logError, isEmpty, dbg } from "../tools";
 require("dotenv").config();
 
 const csvRootPath =
-  "https://api.github.com/repos/CSSEGISandData/COVID-19/contents/csse_covid_19_data/";
+  "https://api.github.com/repos/CSSEGISandData/COVID-19/contents/csse_covid_19_data/csse_covid_19_time_series/";
 
 const dataRootPath =
   "https://api.github.com/repos/CSSEGISandData/COVID-19/git/blobs/";
@@ -15,34 +15,32 @@ const githubAPIPath =
 // Filenames as they are in the github repo
 const remoteFiles = {
   intl: {
-    timeSeriesConfirmedCases: {
+    "time_series_covid19_confirmed_global.csv": {
       type: "cases",
-      path:
-        "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
-      sha: "d4befad4009f63c91f938f7f57c6ae91d05d0d6c",
+      path: "csse_covid_19_time_series",
+      file: "time_series_covid19_confirmed_global.csv"
     },
-    timeSeriesDeaths: {
+    "time_series_covid19_deaths_global.csv": {
       type: "deaths",
-      path: "csse_covid_19_time_series/time_series_covid19_deaths_global.csv",
-      sha: "3119b06d4cc6e861df476d451343a6cce0a1243f",
+      path: "csse_covid_19_time_series",
+      file: "time_series_covid19_deaths_global.csv",
     },
-    timeSeriesRecovered: {
+    "time_series_covid19_recovered_global.csv": {
       type: "recovered",
-      path:
-        "csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
-      sha: "3776b4ffa217e678c7b9567c63529a268422a77a",
+      path: "csse_covid_19_time_series",
+      file: "time_series_covid19_recovered_global.csv",
     },
   },
   us: {
-    timeSeriesConfirmedCases: {
+    "time_series_covid19_confirmed_US.csv": {
       type: "cases",
-      path: "csse_covid_19_time_series/time_series_covid19_confirmed_US.csv",
-      sha: "5eeb3dcae5439d1496d7ea4271a00c1e5d04cd9a",
+      path: "csse_covid_19_time_series",
+      file: "time_series_covid19_confirmed_US.csv",
     },
-    timeSeriesDeaths: {
+    "time_series_covid19_deaths_US.csv": {
       type: "deaths",
-      path: "csse_covid_19_time_series/time_series_covid19_deaths_US.csv",
-      sha: "5c45cfdbf529dbb0a24b5406e40c91b1f31820b3",
+      path: "csse_covid_19_time_series",
+      file: "time_series_covid19_deaths_US.csv",
     },
   },
 };
@@ -79,11 +77,19 @@ export const johnsHopkinsRetrieveData = async () => {
   let result = {};
 
   try {
+    // get sha for each file
+    await getCurrentFileSHA(remoteFiles);
+
+    //dbg("Remote files", remoteFiles);
+
     for (const key of Object.keys(remoteFiles)) {
       result[key] = {};
       for (const filename of Object.keys(remoteFiles[key])) {
+
+        const url = `${dataRootPath}${remoteFiles[key][filename].sha}`;
+
         const response = await axios.get(
-          `${dataRootPath}${remoteFiles[key][filename].sha}`,
+          url,
           {
             headers: {
               Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN,
@@ -91,12 +97,12 @@ export const johnsHopkinsRetrieveData = async () => {
           }
         );
 
-        const buffer = Buffer.from(response.data.content);
+        const buffer = Buffer.from(response.data.content, response.data.encoding);
         result[key][filename] = {
           type: remoteFiles[key][filename].type,
         };
         result[key][filename].data = await csvParse.parse(
-          buffer.toString(response.data.encoding)
+          buffer.toString()
         );
       }
     }
@@ -108,3 +114,22 @@ export const johnsHopkinsRetrieveData = async () => {
 
   return result;
 };
+
+export const getCurrentFileSHA = async (fileList) => {
+  try {
+    const fileMeta = await axios.get(`${csvRootPath}`);
+    //dbg('fileMeta', fileMeta);
+
+    fileMeta.data.map(file => {
+      for (const key of Object.keys(fileList)) {
+        if (fileList[key][file.name]) {
+          fileList[key][file.name].sha = file.sha
+        }
+      }
+    });
+  } catch (err) {
+    logError(
+      `file-johnHopkins::johnsHopkinsRetrieveData::Error retrieving sha for files: ${err}`
+    );
+  }
+}
