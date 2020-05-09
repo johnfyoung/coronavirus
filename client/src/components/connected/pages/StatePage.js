@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 import moment from "moment";
 
+import { mean } from "simple-statistics";
+
 import ConnectedPage from "../../connected/templates/ConnectedPage";
 import TotalsPage from "../../presentation/parts/TotalsGraph";
 import { dbg, history } from "../../../utils";
@@ -32,10 +34,20 @@ class GraphPage extends Component {
     }
 
     formatStateTotals(unFormattedData) {
-        return Object.keys(unFormattedData).map(k => ({
-            name: moment(k, "YYYYMMDD").format("MMM-DD"),
-            ...unFormattedData[k]
-        }));
+        const keys = Object.keys(unFormattedData);
+        return keys.map((k, i) => {
+            const casesMovingAvg = i > 1 ? (mean([unFormattedData[keys[i - 2]].casesRate, unFormattedData[keys[i - 1]].casesRate, unFormattedData[k].casesRate]) * 100).toFixed(2) : .0001;
+            const deathsMovingAvg = i > 1 ? (mean([unFormattedData[keys[i - 2]].deathsRate, unFormattedData[keys[i - 1]].deathsRate, unFormattedData[k].deathsRate]) * 100).toFixed(2) : .0001;
+            return {
+                name: moment(k, "YYYYMMDD").format("MMM-DD"),
+                ...unFormattedData[k],
+                cases: unFormattedData[k].cases === 0 ? .0001 : unFormattedData[k].cases,
+                deaths: unFormattedData[k].deaths === 0 ? .0001 : unFormattedData[k].deaths,
+                casesNew: unFormattedData[k].casesNew === 0 ? .0001 : unFormattedData[k].casesNew,
+                casesMovingAvg: casesMovingAvg === 0 ? .0001 : casesMovingAvg,
+                deathsMovingAvg: deathsMovingAvg === 0 ? .0001 : deathsMovingAvg
+            }
+        });
     }
 
     render() {

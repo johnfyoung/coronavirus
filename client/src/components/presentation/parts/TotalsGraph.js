@@ -16,13 +16,14 @@ export default function TotalsGraph({ data }) {
                 >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis type="number" yAxisId="left" orientation="left" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
-                    <YAxis type="number" yAxisId="right" orientation="right" domain={[0, .2]} allowDataOverflow={true} />
+                    <YAxis type="number" yAxisId="left" orientation="left" scale="log" domain={[1, 'dataMax']} allowDataOverflow={true} />
+                    <YAxis type="number" yAxisId="right" orientation="right" scale="log" domain={[1, 200]} label="Percent" allowDataOverflow={true} />
                     <Tooltip />
                     <Legend />
                     <Line type="monotone" yAxisId="left" dataKey="cases" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
+                    <Line type="monotone" yAxisId="left" dataKey="casesNew" stroke="#dddddd" dot={false} activeDot={{ r: 8 }} />
                     <Line type="monotone" yAxisId="left" dataKey="deaths" stroke="#82ca9d" dot={false} />
-                    <Line type="monotone" yAxisId="right" dataKey="deathsRate" stroke="#FF0000" dot={false} />
+                    <Line type="monotone" yAxisId="right" dataKey="casesMovingAvg" stroke="#FF0000" dot={false} />
                 </LineChart>
             </ResponsiveContainer>
         </div>
