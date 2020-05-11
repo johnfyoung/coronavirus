@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 import moment from "moment";
@@ -10,7 +10,7 @@ import TotalsPage from "../../presentation/parts/TotalsGraph";
 import { dbg, history } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
 
-class GraphPage extends Component {
+class StatePage extends Component {
     state = {
         sortedCounties: null,
         stateTotals: [],
@@ -57,89 +57,111 @@ class GraphPage extends Component {
                 <div className="row">
                     <div className="col-12">
                         {match && match.params ? (
-                            <div>
+                            <Fragment>
                                 <h1>Stats for {match.params.state.charAt(0).toUpperCase() + match.params.state.slice(1)}</h1>
-                                {this.state.stateTotals.length > 0 ? (
-                                    <TotalsPage data={this.state.stateTotals} />
-                                ) : ""}
-                                {this.state.sortedCounties && this.state.sortedCounties.length > 0 ? (
-                                    <table className="table table-striped">
-                                        <thead className="thead-dark">
-                                            <tr>
-                                                <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>County</span></button></th>
-                                                <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
-                                                <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Growth Rate (5 day moving avg)</span></button></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {this.state.sortedCounties.map(county => (
-                                                <tr key={county.uniqueKey}>
-                                                    <td><Link to={`/county/${county.state}/${county.county}`} className="btn btn-link">{county.county}</Link></td>
-                                                    <td>{county.currentCasesCount}</td>
-                                                    <td>{(county.currentMovingAvg * 100).toFixed(2)}%</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                ) : (
-                                        <table>
-                                            <tbody>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr><tr>
-                                                    <td className="td-1"><span></span></td>
-                                                    <td className="td-2"><span></span></td>
-                                                    <td className="td-3"><span></span></td>
-                                                    <td className="td-5"><span></span></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>)}
-                            </div>
+                                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="totals-tab" data-toggle="tab" href="#totals" role="tab" aria-controls="totals" aria-selected="true">Totals</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="counties-tab" data-toggle="tab" href="#counties" role="tab" aria-controls="counties" aria-selected="false">By County</a>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="myTabContent">
+                                    <div class="tab-pane fade show active" id="totals" role="tabpanel" aria-labelledby="totals-tab">
+                                        {this.state.stateTotals.length > 0 ? (
+                                            <TotalsPage data={this.state.stateTotals} />
+                                        ) : ""}
+                                    </div>
+                                    <div class="tab-pane fade" id="counties" role="tabpanel" aria-labelledby="counties-tab">
+
+                                        <div>
+
+
+                                            {this.state.sortedCounties && this.state.sortedCounties.length > 0 ? (
+                                                <table className="table table-striped">
+                                                    <thead className="thead-dark">
+                                                        <tr>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>County</span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Growth Rate (5 day moving avg)</span></button></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {this.state.sortedCounties.map(county => (
+                                                            <tr key={county.uniqueKey}>
+                                                                <td><Link to={`/county/${county.state}/${county.county}`} className="btn btn-link">{county.county}</Link></td>
+                                                                <td>{county.currentCasesCount}</td>
+                                                                <td>{(county.currentMovingAvg * 100).toFixed(2)}%</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                    <table>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr><tr>
+                                                                <td className="td-1"><span></span></td>
+                                                                <td className="td-2"><span></span></td>
+                                                                <td className="td-3"><span></span></td>
+                                                                <td className="td-5"><span></span></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>)}
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </Fragment>
                         ) : "Broken"}
                     </div>
                 </div>
@@ -162,4 +184,4 @@ const actionCreators = {
 export default connect(
     mapStateToProps,
     actionCreators
-)(GraphPage);
+)(StatePage);
