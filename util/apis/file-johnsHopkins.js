@@ -127,6 +127,8 @@ export const getCurrentFileSHA = async (fileList) => {
         }
       }
     });
+
+    dbg("Filelist with SHA", fileList);
   } catch (err) {
     logError(
       `file-johnHopkins::johnsHopkinsRetrieveData::Error retrieving sha for files: ${err}`

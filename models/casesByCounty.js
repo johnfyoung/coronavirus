@@ -10,7 +10,8 @@ import {
 } from "../util/tools";
 import moment from "moment";
 import {
-  harmonicMean
+  harmonicMean,
+  mean
 } from "simple-statistics";
 
 import { Config } from "./config";
@@ -369,6 +370,7 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
 
       let sumOfRates = 0;
       const rates = [];
+      const nonZeroRates = [];
 
       let lastDateKey = "";
       dates.forEach((d, i) => {
@@ -378,23 +380,23 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
           let rate = 0;
 
           rate = i > 0 ? (dataByDate[i] - dataByDate[i - 1]) / dataByDate[i - 1] : 0;
+          rates.push(rate);
           if (rate > 0) {
-            rates.push(rate);
+            nonZeroRates.push(rate);
           }
 
+          let newCount = i > 0 ? (dataByDate[i] - dataByDate[i - 1]) : dataByDate[i];
 
-          let movingAvg = rates.length >= 5 ? harmonicMean(rates.slice(rates.length - 5)) : 0;
-          if (i > 1) {
-            const keyOfPrevDate = Object.keys(data[regionID][dataObj[key].type])[i - 2];
-            data[regionID][dataObj[key].type][keyOfPrevDate].movingAvg = movingAvg;
-          }
+          let movingAvg = rates.length >= 5 ? mean(rates.slice(rates.length - 5)) : 0;
 
           sumOfRates += rate;
           data[regionID][dataObj[key].type][dateKey] = {
             count: dataByDate[i],
             rate,
             sma: sumOfRates / (i + 1),
-            harm: rates.length > 0 ? harmonicMean(rates) : 0
+            harm: nonZeroRates.length > 0 ? harmonicMean(nonZeroRates) : 0,
+            new: newCount,
+            movingAvg
           };
         }
       });
