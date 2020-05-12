@@ -50,19 +50,39 @@ const makeUniqueKey = function (country, state, county) {
         .replace(/[\s'()]/g, "")}`;
 };
 
-casesByCountySchema.statics.getCasesSorted = async function (state, sort = "count", dateStr = "") {
+casesByCountySchema.statics.getCasesSorted = async function (state, sort = sortMethods.CASES, dir = "desc", dateStr = "") {
   const match = {
     state
   };
-  const sortQuery = sort === "count" ? {
-    currentCasesCount: -1
-  } : {
-      currentMovingAvg: -1
-    };
+
+  dir = dir === "desc" ? -1 : 1;
+
+  const sortQuery = {};
+  switch (sort) {
+    case sortMethods.NAME:
+      sortQuery.state = dir;
+      break;
+    case sortMethods.CASES:
+      sortQuery.currentCasesCount = dir;
+      break;
+    case sortMethods.DEATHS:
+      sortQuery.currentDeathsCount = dir;
+      break;
+    case sortMethods.CASESPER100K:
+      sortQuery.casesPer100k = dir;
+      break;
+    case sortMethods.DEATHSPER100K:
+      sortQuery.deathsPer100k = dir;
+      break;
+    case sortMethods.CASESRATEMOVINGAVG:
+      sortQuery.currentMovingAvg = dir;
+      break;
+    default:
+      sortQuery.currentCasesCount = -1;
+  }
 
   const mostRecent = await Config.findOne({ name: "mostRecentStats" });
   const formattedDate = dateStr ? moment(dateStr).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
-  const formattedDateMinusTwo = dateStr ? moment(dateStr).subtract(2, "d").format("YYYYMMDD") : moment(mostRecent.value).subtract(2, "d").format("YYYYMMDD");
 
   return await this.aggregate([{
     $match: match
@@ -71,12 +91,72 @@ casesByCountySchema.statics.getCasesSorted = async function (state, sort = "coun
     $unwind: "$casesByDate"
   },
   {
+    $unwind: "$deathsByDate"
+  },
+  {
     $addFields: {
       currentCasesCount: {
         $toInt: `$casesByDate.${formattedDate}.count`
       },
+      currentDeathsCount: {
+        $toInt: `$deathsByDate.${formattedDate}.count`
+      },
       currentMovingAvg: {
-        $toDouble: `$casesByDate.${formattedDateMinusTwo}.movingAvg`
+        $toDouble: `$casesByDate.${formattedDate}.movingAvg`
+      }
+    }
+  },
+  {
+    $project: {
+      county: 1,
+      state: 1,
+      currentCasesCount: 1,
+      currentDeathsCount: 1,
+      currentMovingAvg: 1,
+      population: 1,
+      casesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentCasesCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      deathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentDeathsCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
       }
     }
   },

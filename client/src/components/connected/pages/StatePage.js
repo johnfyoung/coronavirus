@@ -9,10 +9,13 @@ import ConnectedPage from "../../connected/templates/ConnectedPage";
 import TotalsPage from "../../presentation/parts/TotalsGraph";
 import { dbg, history } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
+import { sortMethods } from "../../../config/constants";
 
 class StatePage extends Component {
     state = {
         sortedCounties: null,
+        sort: sortMethods.CASES,
+        sortDirection: "desc",
         stateTotals: [],
         dataMax: 0
     }
@@ -50,6 +53,22 @@ class StatePage extends Component {
         });
     }
 
+    handleSortClick = (newSort, ev) => {
+        ev.preventDefault();
+        const { getCounties } = this.props;
+        let { sort, sortDirection } = this.state;
+
+        if (sort === newSort) {
+            sortDirection = sortDirection === "desc" ? "asc" : "desc";
+        }
+
+        getCounties(this.props.match.params.state, newSort, sortDirection).then(result => {
+            dbg.log("Got the sortedStates data", result);
+            this.setState({ sort: newSort, sortDirection, sortedCounties: result });
+        });
+
+    };
+
     render() {
         const { match } = this.props;
         return (
@@ -72,20 +91,19 @@ class StatePage extends Component {
                                     <div class="tab-pane fade show active" id="totals" role="tabpanel" aria-labelledby="totals-tab">
                                         {this.state.stateTotals.length > 0 ? (
                                             <TotalsPage data={this.state.stateTotals} />
-                                        ) : ""}
+                                        ) : "Loading..."}
                                     </div>
                                     <div class="tab-pane fade" id="counties" role="tabpanel" aria-labelledby="counties-tab">
-
                                         <div>
-
-
                                             {this.state.sortedCounties && this.state.sortedCounties.length > 0 ? (
                                                 <table className="table table-striped">
                                                     <thead className="thead-dark">
                                                         <tr>
-                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("name", ev)}><span>County</span></button></th>
-                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("count", ev)}><span>Case Count</span><span className="arrow-down"></span></button></th>
-                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick("rate", ev)}><span>Growth Rate (5 day moving avg)</span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick(sortMethods.NAME, ev)}><span>County</span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick(sortMethods.CASES, ev)}><span>Total Cases</span><span className="arrow-down"></span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick(sortMethods.DEATHS, ev)}><span>Total Deaths</span><span className="arrow-down"></span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick(sortMethods.CASESPER100K, ev)}><span>Cases per 100k</span></button></th>
+                                                            <th scope="col"><button className="btn btn-link text-light" onClick={(ev) => this.handleSortClick(sortMethods.CASESRATEMOVINGAVG, ev)}><span>Growth Rate (5 day moving avg)</span></button></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -93,6 +111,8 @@ class StatePage extends Component {
                                                             <tr key={county.uniqueKey}>
                                                                 <td><Link to={`/county/${county.state}/${county.county}`} className="btn btn-link">{county.county}</Link></td>
                                                                 <td>{county.currentCasesCount}</td>
+                                                                <td>{county.currentDeathsCount}</td>
+                                                                <td>{Math.round(county.casesPer100k)}</td>
                                                                 <td>{(county.currentMovingAvg * 100).toFixed(2)}%</td>
                                                             </tr>
                                                         ))}

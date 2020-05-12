@@ -68,9 +68,9 @@ export const statsController = {
 
     return null;
   },
-  getCountiesSorted: async (stateName, sort, date) => {
+  getCountiesSorted: async (stateName, sort, dir, date) => {
     try {
-      return await CasesByCounty.getCasesSorted(stateName, sort, date);
+      return await CasesByCounty.getCasesSorted(stateName, sort, dir, date);
     } catch (err) {
       logError(
         `statsController::getCountiesSorted::Error aggregating data ${err}`

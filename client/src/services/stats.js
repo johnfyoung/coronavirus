@@ -1,5 +1,6 @@
 import { dbg } from "../utils";
 import axios from "axios";
+import { sortMethods } from "../config/constants";
 
 const getStates = () => {
     return axios.get("/api/stats/us/state-list").then(res => {
@@ -46,10 +47,11 @@ const getCasesByCounty = (stateName, countyName) => {
     })
 }
 
-const getCountiesSorted = (stateName, sort = "count", date) => {
+const getCountiesSorted = (stateName, sort = sortMethods.CASES, direction = "desc", date) => {
     return axios.get(`/api/stats/us/cases-by-county-sorted/${stateName}`, {
         params: {
             sort,
+            direction,
             date
         }
     }).then(res => {

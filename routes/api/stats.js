@@ -1,6 +1,7 @@
 import express from "express";
 import { dataPullNames } from "../../config";
 import { dbg, logError } from "../../util/tools";
+import { sortMethods } from "../../config/constants";
 
 import { statsController } from "../../controllers";
 
@@ -47,7 +48,8 @@ router.get("/us/cases-by-county/:stateName/:countyName?", async (req, res) => {
 router.get("/us/cases-by-county-sorted/:stateName", async (req, res) => {
   const result = await statsController.getCountiesSorted(
     req.params.stateName,
-    req.query.sort ? req.query.sort : "count",
+    req.query.sort ? req.query.sort : sortMethods.CASES,
+    req.query.direction ? req.query.direction : "desc",
     req.query.date ? req.query.date : ""
   );
 

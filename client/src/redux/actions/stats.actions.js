@@ -101,11 +101,11 @@ const getLastUpdated = () => {
     }
 }
 
-const getCountiesSorted = (stateName, sort) => {
+const getCountiesSorted = (stateName, sort, direction) => {
     return dispatch => {
         dispatch({ type: serviceConstants.POSTBACK_BEGIN });
 
-        return statsServices.getCountiesSorted(stateName, sort).then(data => {
+        return statsServices.getCountiesSorted(stateName, sort, direction).then(data => {
             dispatch({ type: statsConstants.STATS_GET_CASESBYCOUNTY_SORTED, payload: data });
             dispatch({ type: statsConstants.STATS_SUCCESS });
             return data;

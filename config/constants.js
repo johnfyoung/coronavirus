@@ -73,5 +73,6 @@ export const sortMethods = {
   CASESRATE: "casesRateOfChange",
   DEATHSRATE: "deathsRateOfChange",
   CASESPER100K: "casesPer100k",
-  DEATHSPER100K: "deathsPer100k"
+  DEATHSPER100K: "deathsPer100k",
+  CASESRATEMOVINGAVG: "movingAvg"
 }
