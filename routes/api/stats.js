@@ -59,6 +59,21 @@ router.get("/us/cases-by-county-sorted/:stateName", async (req, res) => {
     res.status(500).send("Unexpected failure gathering data");
   }
 });
+
+router.get("/us/cases-by-county-date", async (req, res) => {
+  const result = await statsController.getByDate(
+    req.query.sort ? req.query.sort : sortMethods.CASES,
+    req.query.direction ? req.query.direction : "desc",
+    req.query.date ? req.query.date : ""
+  );
+
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(500).send("Unexpected failure gathering data");
+  }
+});
+
 router.get("/us/cases-by-state-sorted", async (req, res) => {
   const result = await statsController.getStatesSorted(
     req.query.sort,

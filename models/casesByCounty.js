@@ -178,6 +178,328 @@ const createDateList = (startDate, endDate) => {
   return dates;
 };
 
+casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASESRATEMOVINGAVG, dir = "desc", date = null) {
+  date = date || await Config.findOne({ name: "mostRecentStats" });
+  dir = dir === "desc" ? -1 : 1;
+
+  const sortQuery = {};
+
+  switch (sort) {
+    case sortMethods.NAME:
+      sortQuery.county = dir;
+      break;
+    case sortMethods.CASES:
+      sortQuery.currentCasesCount = dir;
+      break;
+    case sortMethods.DEATHS:
+      sortQuery.currentDeathsCount = dir;
+      break;
+    case sortMethods.CASESPER100K:
+      sortQuery.casesPer100k = dir;
+      break;
+    case sortMethods.DEATHSPER100K:
+      sortQuery.deathsPer100k = dir;
+      break;
+    case sortMethods.CASESRATEMOVINGAVG:
+      sortQuery.currentMovingAvg = dir;
+      break;
+    case sortMethods.NEWCASES:
+      sortQuery.newCasesCount = dir;
+      break;
+    case sortMethods.NEWDEATHS:
+      sortQuery.newDeathsCount = dir;
+      break;
+    default:
+      sortQuery.currentMovingAvg = -1;
+  }
+
+  return this.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            county: { $ne: "" }
+          },
+          {
+            county: { $ne: "Unassigned" }
+          }
+        ]
+      }
+    },
+    {
+      $unwind: "$casesByDate"
+    },
+    {
+      $unwind: "$deathsByDate"
+    },
+    {
+      $addFields: {
+        currentCasesCount: {
+          $toInt: `$casesByDate.${date}.count`
+        },
+        currentDeathsCount: {
+          $toInt: `$deathsByDate.${date}.count`
+        },
+        currentMovingAvg: `$casesByDate.${date}.movingAvg`,
+        newCasesCount: {
+          $toInt: `$casesByDate.${date}.new`
+        },
+        newDeathsCount: {
+          $toInt: `$deathsByDate.${date}.new`
+        }
+      }
+    },
+    {
+      $project: {
+        county: 1,
+        state: 1,
+        population: 1,
+        currentCasesCount: 1,
+        currentDeathsCount: 1,
+        currentMovingAvg: 1,
+        movingAvg: 1,
+        newCasesCount: 1,
+        newDeathsCount: 1,
+        casesPer100k: {
+          $cond: [
+            {
+              $eq: [
+                "$population",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$currentCasesCount",
+                {
+                  $divide: [
+                    "$population",
+                    100000
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        deathsPer100k: {
+          $cond: [
+            {
+              $eq: [
+                "$population",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$currentDeathsCount",
+                {
+                  $divide: [
+                    "$population",
+                    100000
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        newCasesPer100k: {
+          $cond: [
+            {
+              $eq: [
+                "$population",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$newCasesCount",
+                {
+                  $divide: [
+                    "$population",
+                    100000
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        newDeathsPer100k: {
+          $cond: [
+            {
+              $eq: [
+                "$population",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$newDeathsCount",
+                {
+                  $divide: [
+                    "$population",
+                    100000
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      $sort: sortQuery
+    }
+  ]);
+
+  /*
+db.getCollection('casesbycounties').aggregate([
+{
+    $match: {
+        $and:[
+            {
+                county:{$ne: "" }
+            },
+            {
+                county:{$ne: "Unassigned" }
+            }
+        ]
+    }
+},
+{
+    $unwind: "$casesByDate"
+},
+{
+    $unwind: "$deathsByDate"
+},
+{
+    $addFields: {
+      currentCasesCount: {
+        $toInt: "$casesByDate.20200515.count"
+      },
+      currentDeathsCount: {
+        $toInt: "$deathsByDate.20200515.count"
+      },
+      currentMovingAvg: "$casesByDate.20200515.movingAvg",
+      newCasesCount: {
+        $toInt: "$casesByDate.20200515.new"
+      },
+      newDeathsCount: {
+        $toInt: "$deathsByDate.20200515.new"
+      }
+    }
+},
+{
+    $project: {
+        county: 1,
+        state: 1,
+        population: 1,
+        currentCasesCount: 1,
+        currentDeathsCount: 1,
+        currentMovingAvg: 1,
+        movingAvg: 1,
+        casesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentCasesCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      deathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentDeathsCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      newCasesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$newCasesCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      newDeathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$newDeathsCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+},
+{
+    $sort: {
+        currentMovingAvg: -1
+    }
+}
+])
+  */
+};
+
 casesByCountySchema.statics.getTotals = async function (stateName = null, countyName = null, startDate = "20200123", endDate = "", ) {
   const mostRecent = await Config.findOne({ name: "mostRecentStats" });
   endDate = endDate != "" ? moment(endDate).format("YYYYMMDD") : moment(mostRecent.value).format("YYYYMMDD");
@@ -607,3 +929,148 @@ export const CasesByCounty = mongoose.model(
   "casesByCounty",
   casesByCountySchema
 );
+
+/*
+
+db.getCollection('casesbycounties').aggregate([
+{
+    $match: {
+        $and:[
+            {
+                county:{$ne: "" }
+            },
+            {
+                county:{$ne: "Unassigned" }
+            }
+        ]
+    }
+},
+{
+    $unwind: "$casesByDate"
+},
+{
+    $unwind: "$deathsByDate"
+},
+{
+    $addFields: {
+      currentCasesCount: {
+        $toInt: "$casesByDate.20200515.count"
+      },
+      currentDeathsCount: {
+        $toInt: "$deathsByDate.20200515.count"
+      },
+      currentMovingAvg: "$casesByDate.20200515.movingAvg",
+      newCasesCount: {
+        $toInt: "$casesByDate.20200515.new"
+      },
+      newDeathsCount: {
+        $toInt: "$deathsByDate.20200515.new"
+      }
+    }
+},
+{
+    $project: {
+        county: 1,
+        state: 1,
+        population: 1,
+        currentCasesCount: 1,
+        currentDeathsCount: 1,
+        currentMovingAvg: 1,
+        movingAvg: 1,
+        casesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentCasesCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      deathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$currentDeathsCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      newCasesPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$newCasesCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      newDeathsPer100k: {
+        $cond: [
+          {
+            $eq: [
+              "$population",
+              0
+            ]
+          },
+          0,
+          {
+            $divide: [
+              "$newDeathsCount",
+              {
+                $divide: [
+                  "$population",
+                  100000
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+},
+{
+    $sort: {
+        currentMovingAvg: -1
+    }
+}
+])
+*/

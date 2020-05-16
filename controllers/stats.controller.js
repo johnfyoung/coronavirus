@@ -119,6 +119,13 @@ export const statsController = {
       `statsController::getTotals::Error aggregating data ${err}`
     }
   },
+  getByDate: async (sort, dir, date) => {
+    try {
+      return CasesByCounty.getByDate(sort, dir, date);
+    } catch (err) {
+      `statsController::getByDate::Error aggregating data ${err}`
+    }
+  },
   getLatestDataDump: async (dumpName) => {
     return await DataPull.findLatest(dumpName);
   },
