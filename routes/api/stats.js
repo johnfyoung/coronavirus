@@ -61,9 +61,10 @@ router.get("/us/cases-by-county-sorted/:stateName", async (req, res) => {
 });
 
 router.get("/us/cases-by-county-date", async (req, res) => {
+  dbg("cases-by-county-date req", req.query);
   const result = await statsController.getByDate(
     req.query.sort ? req.query.sort : sortMethods.CASES,
-    req.query.direction ? req.query.direction : "desc",
+    req.query.dir ? req.query.dir : "desc",
     req.query.date ? req.query.date : ""
   );
 

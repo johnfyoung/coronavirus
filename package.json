@@ -53,6 +53,7 @@
     "passport-jwt": "^4.0.0",
     "puppeteer": "^2.1.1",
     "react-ga": "^2.7.0",
+    "rss-parser": "^3.8.0",
     "simple-statistics": "^7.0.8",
     "uuid": "^3.3.3",
     "validator": "^11.1.0",

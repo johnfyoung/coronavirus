@@ -84,22 +84,21 @@ class HomePage extends Component {
   handleHotSpotsSortClick = (newSort, ev) => {
     ev.preventDefault();
     const { getByDate } = this.props;
-    let { sortHotSpots, sortDirectionHotspots } = this.state;
+    let { sortHotSpots, sortDirectionHotSpots } = this.state;
 
     if (sortHotSpots === newSort) {
-      sortDirectionHotspots = sortDirectionHotspots === "desc" ? "asc" : "desc";
+      sortDirectionHotSpots = sortDirectionHotSpots === "desc" ? "asc" : "desc";
     }
 
-    getByDate(newSort, sortDirectionHotspots).then(result => {
+    getByDate(newSort, sortDirectionHotSpots).then(result => {
       //dbg.log("Got the sortedStates data", result);
-      this.setState({ sortHotSpots: newSort, sortDirectionHotspots, sortedByDate: result });
+      this.setState({ sortHotSpots: newSort, sortDirectionHotSpots, sortedByDate: result });
     });
 
   };
 
   render() {
     const { sort, sortDirection, sortedData, totals, sortHotSpots, sortDirectionHotSpots, sortedByDate } = this.state;
-
     return (
       <ConnectedPage pageClass="page-home" nav={this.props.nav} >
         <div className="row">
@@ -107,24 +106,24 @@ class HomePage extends Component {
             <h1>Coronavirus Stats</h1>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
               <li class="nav-item">
-                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+                <a class="nav-link active" id="hotspots-tab" data-toggle="tab" href="#hotspots" role="tab" aria-controls="hotspots" aria-selected="false">Hot Spots</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="hotspots-tab" data-toggle="tab" href="#hotspots" role="tab" aria-controls="hotspots" aria-selected="false">Hot Spots</a>
+                <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">US Cases</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" id="states-tab" data-toggle="tab" href="#states" role="tab" aria-controls="states" aria-selected="false">By State</a>
               </li>
             </ul>
             <div class="tab-content" id="myTabContent">
-              <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+              <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
                 {totals.length > 0 ? (
                   <TotalsGraph data={totals} />
                 ) : (
                     "Loading..."
                   )}
               </div>
-              <div class="tab-pane fade" id="hotspots" role="tabpanel" aria-labelledby="hotspots-tab">
+              <div class="tab-pane fade show active" id="hotspots" role="tabpanel" aria-labelledby="hotspots-tab">
                 {sortedByDate.length > 0 ? (
                   <table className="table table-striped data-table">
                     <thead className="thead-dark">

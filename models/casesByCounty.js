@@ -183,7 +183,7 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
   date = date || mostRecent.value;
   dir = dir === "desc" ? -1 : 1;
 
-  dbg("getByDate: date", date);
+  dbg("getByDate: sort", sort);
 
   const sortQuery = {};
 
@@ -215,6 +215,8 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
     default:
       sortQuery.currentMovingAvg = -1;
   }
+
+  dbg("getByDate: sortQuery", sortQuery);
 
   return this.aggregate([
     {
@@ -358,164 +360,17 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
         $and: [
           {
             currentCasesCount: { $gt: 50 }
-          },
-          {
-            casesPer100k: { $gt: 300 }
           }
         ]
       }
-    },
-    {
-      $limit: 100
     },
     {
       $sort: sortQuery
+    },
+    {
+      $limit: 100
     }
   ]);
-
-  /*
-db.getCollection('casesbycounties').aggregate([
-{
-    $match: {
-        $and:[
-            {
-                county:{$ne: "" }
-            },
-            {
-                county:{$ne: "Unassigned" }
-            }
-        ]
-    }
-},
-{
-    $unwind: "$casesByDate"
-},
-{
-    $unwind: "$deathsByDate"
-},
-{
-    $addFields: {
-      currentCasesCount: {
-        $toInt: "$casesByDate.20200515.count"
-      },
-      currentDeathsCount: {
-        $toInt: "$deathsByDate.20200515.count"
-      },
-      currentMovingAvg: "$casesByDate.20200515.movingAvg",
-      newCasesCount: {
-        $toInt: "$casesByDate.20200515.new"
-      },
-      newDeathsCount: {
-        $toInt: "$deathsByDate.20200515.new"
-      }
-    }
-},
-{
-    $project: {
-        county: 1,
-        state: 1,
-        population: 1,
-        currentCasesCount: 1,
-        currentDeathsCount: 1,
-        currentMovingAvg: 1,
-        movingAvg: 1,
-        casesPer100k: {
-        $cond: [
-          {
-            $eq: [
-              "$population",
-              0
-            ]
-          },
-          0,
-          {
-            $divide: [
-              "$currentCasesCount",
-              {
-                $divide: [
-                  "$population",
-                  100000
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      deathsPer100k: {
-        $cond: [
-          {
-            $eq: [
-              "$population",
-              0
-            ]
-          },
-          0,
-          {
-            $divide: [
-              "$currentDeathsCount",
-              {
-                $divide: [
-                  "$population",
-                  100000
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      newCasesPer100k: {
-        $cond: [
-          {
-            $eq: [
-              "$population",
-              0
-            ]
-          },
-          0,
-          {
-            $divide: [
-              "$newCasesCount",
-              {
-                $divide: [
-                  "$population",
-                  100000
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      newDeathsPer100k: {
-        $cond: [
-          {
-            $eq: [
-              "$population",
-              0
-            ]
-          },
-          0,
-          {
-            $divide: [
-              "$newDeathsCount",
-              {
-                $divide: [
-                  "$population",
-                  100000
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    }
-},
-{
-    $sort: {
-        currentMovingAvg: -1
-    }
-}
-])
-  */
 };
 
 casesByCountySchema.statics.getTotals = async function (stateName = null, countyName = null, startDate = "20200123", endDate = "", ) {
