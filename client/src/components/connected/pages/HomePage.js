@@ -9,28 +9,36 @@ import DataGraph from "../../presentation/parts/DataGraph";
 import TotalsGraph from "../../presentation/parts/TotalsGraph";
 import { dbg } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
+import { sortMethods } from "../../../config/constants";
 
 import ReactGA from "react-ga";
 
 class HomePage extends Component {
   state = {
-    sort: "deaths",
+    sort: sortMethods.CASESPER100K,
     sortDirection: "desc",
+    sortHotSpots: sortMethods.CASESRATEMOVINGAVG,
+    sortDirectionHotSpots: "desc",
     sortedData: [],
+    sortedByDate: [],
     totals: []
   }
 
   componentDidMount() {
     dbg.log("Mounting Home page");
-    const { getStatesSorted, getTotals } = this.props;
-    const { sort, sortDirection } = this.state;
+    const { getStatesSorted, getTotals, getByDate } = this.props;
+    const { sort, sortDirection, sortHotSpots, sortDirectionHotSpots } = this.state;
 
     getTotals().then(totalsResult => {
       dbg.log("Got the totals", totalsResult);
       this.setState({ totals: this.formatTotals(totalsResult) }, () => {
-        getStatesSorted(sort, sortDirection).then(result => {
-          dbg.log("Got the sortedStates data", result);
-          this.setState({ sortedData: result });
+        getByDate(sortHotSpots, sortDirectionHotSpots).then(countiesResult => {
+          this.setState({ sortedByDate: countiesResult }, () => {
+            getStatesSorted(sort, sortDirection).then(result => {
+              //dbg.log("Got the sortedStates data", result);
+              this.setState({ sortedData: result });
+            });
+          });
         });
       });
     });
@@ -73,8 +81,24 @@ class HomePage extends Component {
 
   };
 
+  handleHotSpotsSortClick = (newSort, ev) => {
+    ev.preventDefault();
+    const { getByDate } = this.props;
+    let { sortHotSpots, sortDirectionHotspots } = this.state;
+
+    if (sortHotSpots === newSort) {
+      sortDirectionHotspots = sortDirectionHotspots === "desc" ? "asc" : "desc";
+    }
+
+    getByDate(newSort, sortDirectionHotspots).then(result => {
+      //dbg.log("Got the sortedStates data", result);
+      this.setState({ sortHotSpots: newSort, sortDirectionHotspots, sortedByDate: result });
+    });
+
+  };
+
   render() {
-    const { sort, sortDirection, sortedData, totals } = this.state;
+    const { sort, sortDirection, sortedData, totals, sortHotSpots, sortDirectionHotSpots, sortedByDate } = this.state;
 
     return (
       <ConnectedPage pageClass="page-home" nav={this.props.nav} >
@@ -84,6 +108,9 @@ class HomePage extends Component {
             <ul class="nav nav-tabs" id="myTab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="hotspots-tab" data-toggle="tab" href="#hotspots" role="tab" aria-controls="hotspots" aria-selected="false">Hot Spots</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" id="states-tab" data-toggle="tab" href="#states" role="tab" aria-controls="states" aria-selected="false">By State</a>
@@ -96,6 +123,121 @@ class HomePage extends Component {
                 ) : (
                     "Loading..."
                   )}
+              </div>
+              <div class="tab-pane fade" id="hotspots" role="tabpanel" aria-labelledby="hotspots-tab">
+                {sortedByDate.length > 0 ? (
+                  <table className="table table-striped data-table">
+                    <thead className="thead-dark">
+                      <tr>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.NAME, ev)}>
+                            <span className={(sortHotSpots === sortMethods.NAME ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>County</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.CASESRATEMOVINGAVG, ev)}>
+                            <span className={(sortHotSpots === sortMethods.CASESRATEMOVINGAVG ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>% Change Moving Avg</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.NEWCASES, ev)}>
+                            <span className={(sortHotSpots === sortMethods.NEWCASES ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>New Cases</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("cases", ev)}>
+                            <span className={(sortHotSpots === "cases" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Case Count</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("deaths", ev)}>
+                            <span className={(sortHotSpots === "deaths" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Death Count</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("casesPer100k", ev)}>
+                            <span className={(sortHotSpots === "casesPer100k" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Cases Per 100k</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("deathsPer100k", ev)}>
+                            <span className={(sortHotSpots === "deathsPer100k" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Deaths Per 100k</span>
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedByDate.map(countyData => (
+                        <tr key={`${countyData.county}-${countyData.state}`}>
+                          <td><Link to={`/county/${countyData.state}/${countyData.county}`} className="btn btn-link">{countyData.county}, {countyData.state}</Link></td>
+                          <td className="data-table-number">{countyData.currentMovingAvg ? `${(countyData.currentMovingAvg * 100).toFixed(2)}%` : "0"}</td>
+                          <td className="data-table-number">{countyData.newCasesCount ? countyData.newCasesCount.toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.currentCasesCount ? countyData.currentCasesCount.toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.currentDeathsCount ? countyData.currentDeathsCount.toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.casesPer100k ? Math.round(countyData.casesPer100k).toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.deathsPer100k ? Math.round(countyData.deathsPer100k).toLocaleString() : "0"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                        <tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr><tr>
+                          <td className="td-1"><span></span></td>
+                          <td className="td-2"><span></span></td>
+                          <td className="td-3"><span></span></td>
+                          <td className="td-5"><span></span></td>
+                        </tr>
+                      </tbody>
+                    </table>)}
               </div>
               <div class="tab-pane fade" id="states" role="tabpanel" aria-labelledby="states-tab">
                 {sortedData.length > 0 ? (
@@ -220,7 +362,8 @@ const mapStateToProps = ({ service, loading, stats }) => ({
 
 const actionCreators = {
   getStatesSorted: statsActions.getStatesSorted,
-  getTotals: statsActions.getTotals
+  getTotals: statsActions.getTotals,
+  getByDate: statsActions.getByDate
 };
 
 export default connect(

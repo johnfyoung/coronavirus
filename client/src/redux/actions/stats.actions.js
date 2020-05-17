@@ -152,6 +152,23 @@ const getTotals = (state, county, startDate, endDate) => {
     }
 }
 
+const getByDate = (sort, dir, date) => {
+    return dispatch => {
+        dispatch({ type: serviceConstants.POSTBACK_BEGIN });
+
+        return statsServices.getByDate(sort, dir, date).then(data => {
+            dispatch({ type: statsConstants.STATS_GET_BYDATE, payload: data });
+            dispatch({ type: statsConstants.STATS_SUCCESS });
+            return data;
+        }).catch(err => {
+            dispatch({ type: statsConstants.STATS_FAILURE });
+            dispatch({ type: serviceConstants.POSTBACK_ERROR });
+        }).finally(() => {
+            dispatch({ type: serviceConstants.POSTBACK_END });
+        });
+    }
+}
+
 const selectState = (stateName) => {
     return dispatch => {
         dispatch({ type: statsConstants.STATS_SELECT_STATE, payload: stateName });
@@ -174,5 +191,6 @@ export const statsActions = {
     getCountiesSorted,
     getLastUpdated,
     getStatesSorted,
-    getTotals
+    getTotals,
+    getByDate
 };

@@ -179,8 +179,11 @@ const createDateList = (startDate, endDate) => {
 };
 
 casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASESRATEMOVINGAVG, dir = "desc", date = null) {
-  date = date || await Config.findOne({ name: "mostRecentStats" });
+  const mostRecent = await Config.findOne({ name: "mostRecentStats" });
+  date = date || mostRecent.value;
   dir = dir === "desc" ? -1 : 1;
+
+  dbg("getByDate: date", date);
 
   const sortQuery = {};
 
@@ -349,6 +352,21 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
           ]
         }
       }
+    },
+    {
+      $match: {
+        $and: [
+          {
+            currentCasesCount: { $gt: 50 }
+          },
+          {
+            casesPer100k: { $gt: 300 }
+          }
+        ]
+      }
+    },
+    {
+      $limit: 100
     },
     {
       $sort: sortQuery

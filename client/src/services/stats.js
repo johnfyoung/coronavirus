@@ -110,6 +110,27 @@ const getTotals = (state, county, start, end) => {
     })
 }
 
+const getByDate = (sort, dir, date) => {
+    return axios.get(`/api/stats/us/cases-by-county-date`, {
+        params: {
+            sort,
+            dir,
+            date
+        }
+    }).then(res => {
+        dbg.log("statsServices::getByDate response", res);
+
+        if (res.status === 200) {
+            return res.data;
+        }
+    }).catch(error => {
+        dbg.log("statsServices::getByDate error", error);
+        const err = Error("Stats error");
+        err.data = error.response.data;
+        throw err;
+    })
+}
+
 const getLastUpdated = () => {
     return axios.get("/api/stats/us/last-updated").then(res => {
         dbg.log("statsServices::getLastUpdated response", res);
@@ -131,5 +152,6 @@ export const statsServices = {
     getLastUpdated,
     getCountiesSorted,
     getStatesSorted,
-    getTotals
+    getTotals,
+    getByDate
 }
