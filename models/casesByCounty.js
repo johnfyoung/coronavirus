@@ -226,6 +226,9 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
     case sortMethods.NEWDEATHSPER100k:
       sortQuery.newDeathsPer100k = dir;
       break;
+    case sortMethods.MORTALITYRATE:
+      sortQuery.mortalityRate = dir;
+      break;
     default:
       sortQuery.currentMovingAvg = -1;
   }
@@ -284,6 +287,23 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
         newMovingAvg: 1,
         newCasesCount: 1,
         newDeathsCount: 1,
+        mortalityRate: {
+          $cond: [
+            {
+              $eq: [
+                "$currentCasesCount",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$currentDeathsCount",
+                "$currentCasesCount"
+              ]
+            }
+          ]
+        },
         daysSinceFirstCase: {
           $divide: [
             {

@@ -12,5 +12,6 @@ export const sortMethods = {
     NEWCASES: "newCases",
     NEWDEATHS: "newDeaths",
     NEWCASESPER100k: "newCasesPer100k",
-    NEWDEATHSPER100k: "newDeathsPer100k"
+    NEWDEATHSPER100k: "newDeathsPer100k",
+    MORTALITYRATE: "mortalityRate"
 }
