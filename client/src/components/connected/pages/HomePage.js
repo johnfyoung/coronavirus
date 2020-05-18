@@ -104,26 +104,26 @@ class HomePage extends Component {
         <div className="row">
           <div className="col-12">
             <h1>Coronavirus Stats</h1>
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="hotspots-tab" data-toggle="tab" href="#hotspots" role="tab" aria-controls="hotspots" aria-selected="false">Hot Spots</a>
+            <ul className="nav nav-tabs" id="myTab" role="tablist">
+              <li className="nav-item">
+                <a className="nav-link active" id="hotspots-tab" data-toggle="tab" href="#hotspots" role="tab" aria-controls="hotspots" aria-selected="false">Hot Spots</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">US Cases</a>
+              <li className="nav-item">
+                <a className="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">US Cases</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" id="states-tab" data-toggle="tab" href="#states" role="tab" aria-controls="states" aria-selected="false">By State</a>
+              <li className="nav-item">
+                <a className="nav-link" id="states-tab" data-toggle="tab" href="#states" role="tab" aria-controls="states" aria-selected="false">By State</a>
               </li>
             </ul>
-            <div class="tab-content" id="myTabContent">
-              <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
+            <div className="tab-content" id="myTabContent">
+              <div className="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
                 {totals.length > 0 ? (
                   <TotalsGraph data={totals} />
                 ) : (
                     "Loading..."
                   )}
               </div>
-              <div class="tab-pane fade show active" id="hotspots" role="tabpanel" aria-labelledby="hotspots-tab">
+              <div className="tab-pane fade show active" id="hotspots" role="tabpanel" aria-labelledby="hotspots-tab">
                 {sortedByDate.length > 0 ? (
                   <table className="table table-striped data-table">
                     <thead className="thead-dark">
@@ -135,7 +135,17 @@ class HomePage extends Component {
                         </th>
                         <th scope="col">
                           <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.CASESRATEMOVINGAVG, ev)}>
-                            <span className={(sortHotSpots === sortMethods.CASESRATEMOVINGAVG ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>% Change Moving Avg</span>
+                            <span className={(sortHotSpots === sortMethods.CASESRATEMOVINGAVG ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Moving Avg of % Change</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.NEWCASESMOVINGAVG, ev)}>
+                            <span className={(sortHotSpots === sortMethods.NEWCASESMOVINGAVG ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Moving Avg New Cases</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.NEWCASESMOVINGAVGPER100k, ev)}>
+                            <span className={(sortHotSpots === sortMethods.NEWCASESMOVINGAVGPER100k ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Moving Avg New Cases Per 100k</span>
                           </button>
                         </th>
                         <th scope="col">
@@ -144,23 +154,28 @@ class HomePage extends Component {
                           </button>
                         </th>
                         <th scope="col">
-                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("cases", ev)}>
-                            <span className={(sortHotSpots === "cases" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Case Count</span>
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.NEWCASESPER100k, ev)}>
+                            <span className={(sortHotSpots === sortMethods.NEWCASESPER100k ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>New Cases Per 100k</span>
                           </button>
                         </th>
                         <th scope="col">
-                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("deaths", ev)}>
-                            <span className={(sortHotSpots === "deaths" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Death Count</span>
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.CASES, ev)}>
+                            <span className={(sortHotSpots === sortMethods.CASES ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Case Count</span>
                           </button>
                         </th>
                         <th scope="col">
-                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("casesPer100k", ev)}>
-                            <span className={(sortHotSpots === "casesPer100k" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Cases Per 100k</span>
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.DEATHS, ev)}>
+                            <span className={(sortHotSpots === sortMethods.DEATHS ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Death Count</span>
                           </button>
                         </th>
                         <th scope="col">
-                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick("deathsPer100k", ev)}>
-                            <span className={(sortHotSpots === "deathsPer100k" ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Deaths Per 100k</span>
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.CASESPER100K, ev)}>
+                            <span className={(sortHotSpots === sortMethods.CASESPER100K ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Cases Per 100k</span>
+                          </button>
+                        </th>
+                        <th scope="col">
+                          <button className="btn btn-link text-light" onClick={(ev) => this.handleHotSpotsSortClick(sortMethods.DEATHSPER100K, ev)}>
+                            <span className={(sortHotSpots === sortMethods.DEATHSPER100K ? (sortDirectionHotSpots === "desc" ? "arrow-down" : "arrow-up") : "")}>Deaths Per 100k</span>
                           </button>
                         </th>
                       </tr>
@@ -170,7 +185,10 @@ class HomePage extends Component {
                         <tr key={`${countyData.county}-${countyData.state}`}>
                           <td><Link to={`/county/${countyData.state}/${countyData.county}`} className="btn btn-link">{countyData.county}, {countyData.state}</Link></td>
                           <td className="data-table-number">{countyData.currentMovingAvg ? `${(countyData.currentMovingAvg * 100).toFixed(2)}%` : "0"}</td>
+                          <td className="data-table-number">{countyData.newMovingAvg ? countyData.newMovingAvg.toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.newMovingAvgPer100k ? countyData.newMovingAvgPer100k.toLocaleString() : "0"}</td>
                           <td className="data-table-number">{countyData.newCasesCount ? countyData.newCasesCount.toLocaleString() : "0"}</td>
+                          <td className="data-table-number">{countyData.newCasesPer100k ? Math.round(countyData.newCasesPer100k).toLocaleString() : "0"}</td>
                           <td className="data-table-number">{countyData.currentCasesCount ? countyData.currentCasesCount.toLocaleString() : "0"}</td>
                           <td className="data-table-number">{countyData.currentDeathsCount ? countyData.currentDeathsCount.toLocaleString() : "0"}</td>
                           <td className="data-table-number">{countyData.casesPer100k ? Math.round(countyData.casesPer100k).toLocaleString() : "0"}</td>

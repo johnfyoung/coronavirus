@@ -24,9 +24,11 @@ const casesByCountySchema = new Schema({
   region: String,
   lat: Number,
   long: Number,
-  mostRecent: String,
+  mostRecent: Date,
   casesByDate: Array,
   deathsByDate: Array,
+  firstCase: Date,
+  firstDeath: Date,
   regionName: String,
   divisionName: String,
   regionFIPS: String,
@@ -206,11 +208,23 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
     case sortMethods.CASESRATEMOVINGAVG:
       sortQuery.currentMovingAvg = dir;
       break;
+    case sortMethods.NEWCASESMOVINGAVG:
+      sortQuery.newMovingAvg = dir;
+      break;
+    case sortMethods.NEWCASESMOVINGAVGPER100k:
+      sortQuery.newMovingAvgPer100k = dir;
+      break;
     case sortMethods.NEWCASES:
       sortQuery.newCasesCount = dir;
       break;
     case sortMethods.NEWDEATHS:
       sortQuery.newDeathsCount = dir;
+      break;
+    case sortMethods.NEWCASESPER100k:
+      sortQuery.newCasesPer100k = dir;
+      break;
+    case sortMethods.NEWDEATHSPER100k:
+      sortQuery.newDeathsPer100k = dir;
       break;
     default:
       sortQuery.currentMovingAvg = -1;
@@ -246,6 +260,7 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
           $toInt: `$deathsByDate.${date}.count`
         },
         currentMovingAvg: `$casesByDate.${date}.movingAvg`,
+        newMovingAvg: `$casesByDate.${date}.newMovingAvg`,
         newCasesCount: {
           $toInt: `$casesByDate.${date}.new`
         },
@@ -263,8 +278,34 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
         currentDeathsCount: 1,
         currentMovingAvg: 1,
         movingAvg: 1,
+        firstCase: 1,
+        firstDeath: 1,
+        mostRecent: 1,
+        newMovingAvg: 1,
         newCasesCount: 1,
         newDeathsCount: 1,
+        daysSinceFirstCase: {
+          $divide: [
+            {
+              $subtract: [
+                "$mostRecent",
+                "$firstCase"
+              ]
+            },
+            86400000
+          ]
+        },
+        daysSinceFirstDeath: {
+          $divide: [
+            {
+              $subtract: [
+                "$mostRecent",
+                "$firstDeath"
+              ]
+            },
+            86400000
+          ]
+        },
         casesPer100k: {
           $cond: [
             {
@@ -352,7 +393,29 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
               ]
             }
           ]
-        }
+        },
+        newMovingAvgPer100k: {
+          $cond: [
+            {
+              $eq: [
+                "$population",
+                0
+              ]
+            },
+            0,
+            {
+              $divide: [
+                "$newMovingAvg",
+                {
+                  $divide: [
+                    "$population",
+                    100000
+                  ]
+                }
+              ]
+            }
+          ]
+        },
       }
     },
     {
@@ -642,16 +705,27 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
         data[regionID]["long"] = row[9];
       }
       data[regionID][dataObj[key].type] = {};
+      data[regionID][dataObj[key].type].byDate = {};
 
       let sumOfRates = 0;
       const rates = [];
+      const newCounts = [];
       const nonZeroRates = [];
+      let firstActivity = "";
 
       let lastDateKey = "";
       dates.forEach((d, i) => {
         const dateKey = moment(d, "M/D/YY").format("YYYYMMDD");
         lastDateKey = dateKey;
         if (dateKey !== "Invalid date") {
+          // if (dataObj[key].type === 'cases') {
+          //   dbg("Checking First Activity", { firstActivity, theVal: dataByDate[i], dateKey });
+          // }
+          if (firstActivity === "") {
+            if (parseInt(dataByDate[i]) > 0) {
+              firstActivity = dateKey;
+            }
+          }
           let rate = 0;
 
           rate = i > 0 ? (dataByDate[i] - dataByDate[i - 1]) / dataByDate[i - 1] : 0;
@@ -661,21 +735,26 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
           }
 
           let newCount = i > 0 ? (dataByDate[i] - dataByDate[i - 1]) : dataByDate[i];
+          newCounts.push(newCount);
 
           let movingAvg = rates.length >= 5 ? mean(rates.slice(rates.length - 5)) : 0;
+          let newMovingAvg = newCounts.length >= 5 ? mean(newCounts.slice(newCounts.length - 5)) : 0;
 
           sumOfRates += rate;
-          data[regionID][dataObj[key].type][dateKey] = {
+          data[regionID][dataObj[key].type].byDate[dateKey] = {
             count: dataByDate[i],
             rate,
             sma: sumOfRates / (i + 1),
             harm: nonZeroRates.length > 0 ? harmonicMean(nonZeroRates) : 0,
             new: newCount,
-            movingAvg
+            movingAvg,
+            newMovingAvg
           };
         }
       });
-      data[regionID]["mostRecent"] = lastDateKey;
+
+      data[regionID][dataObj[key].type].firstActivity = firstActivity !== "" ? moment(firstActivity, "YYYYMMDD").format("YYYY-MM-DD") : null;
+      data[regionID]["mostRecent"] = moment(lastDateKey, "YYYYMMDD").format("YYYY-MM-DD");
     });
   }
 
@@ -699,8 +778,8 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
       //dbg("County result");
       if (county) {
         //dbg(`Got a county: ${county.county}, ${county.state}`, formattedData[key].cases);
-        county.casesByDate = formattedData[key].cases;
-        county.deathsByDate = formattedData[key].deaths;
+        county.casesByDate = formattedData[key].cases.byDate;
+        county.deathsByDate = formattedData[key].deaths.byDate;
         county.mostRecent = formattedData[key].mostRecent;
         county.dataPull = dPull;
       } else {
@@ -712,17 +791,24 @@ casesByCountySchema.statics.updateFromDataPull = async function (dataObj, dPull)
           county: formattedData[key].county,
           lat: formattedData[key].lat,
           long: formattedData[key].long,
-          casesByDate: formattedData[key].cases,
-          deathsByDate: formattedData[key].deaths,
+          casesByDate: formattedData[key].cases.byDate,
+          deathsByDate: formattedData[key].deaths.byDate,
           mostRecent: formattedData[key].mostRecent,
           dataPull: dPull
         });
       }
 
+      if (formattedData[key].cases.firstActivity) {
+        county.firstCase = formattedData[key].cases.firstActivity;
+      }
+      if (formattedData[key].deaths.firstActivity) {
+        county.firstDeath = formattedData[key].deaths.firstActivity;
+      }
+
       return await county.save();
     }));
 
-    await Config.findOneAndUpdate({ name: "mostRecentStats" }, { value: mostRecent }, { new: true, upsert: true });
+    await Config.findOneAndUpdate({ name: "mostRecentStats" }, { value: moment(mostRecent).format("YYYYMMDD") }, { new: true, upsert: true });
   } catch (err) {
     logError(
       `CasesByCounty::updateFromDataPull::Error storing data from datapull = ${err}`
