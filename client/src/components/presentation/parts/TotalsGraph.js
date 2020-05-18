@@ -22,8 +22,9 @@ export default function TotalsGraph({ data }) {
                     <Legend />
                     <Line type="monotone" yAxisId="left" dataKey="cases" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
                     <Line type="monotone" yAxisId="left" dataKey="casesNew" stroke="#dddddd" dot={false} activeDot={{ r: 8 }} />
+                    <Line type="monotone" yAxisId="left" dataKey="casesNewMovingAvg" stroke="#00dddd" dot={false} activeDot={{ r: 8 }} />
                     <Line type="monotone" yAxisId="left" dataKey="deaths" stroke="#82ca9d" dot={false} />
-                    <Line type="monotone" yAxisId="right" dataKey="casesMovingAvg" stroke="#FF0000" dot={false} />
+                    <Line type="monotone" yAxisId="right" dataKey="mortalityRate" stroke="#FF0000" dot={false} />
                 </LineChart>
             </ResponsiveContainer>
         </div>

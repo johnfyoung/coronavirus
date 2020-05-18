@@ -180,12 +180,10 @@ const createDateList = (startDate, endDate) => {
   return dates;
 };
 
-casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASESRATEMOVINGAVG, dir = "desc", date = null) {
+casesByCountySchema.statics.getSnapshot = async function (sort = sortMethods.CASESRATEMOVINGAVG, dir = "desc", date = null) {
   const mostRecent = await Config.findOne({ name: "mostRecentStats" });
   date = date || mostRecent.value;
   dir = dir === "desc" ? -1 : 1;
-
-  dbg("getByDate: sort", sort);
 
   const sortQuery = {};
 
@@ -232,8 +230,6 @@ casesByCountySchema.statics.getByDate = async function (sort = sortMethods.CASES
     default:
       sortQuery.currentMovingAvg = -1;
   }
-
-  dbg("getByDate: sortQuery", sortQuery);
 
   return this.aggregate([
     {
@@ -469,25 +465,53 @@ casesByCountySchema.statics.getTotals = async function (stateName = null, county
   };
 
   const dateStrings = createDateList(startDate, endDate);
+  dbg("datestrings", dateStrings);
 
-  if (moment(startDate, "YYYYMMDD").isAfter(moment("20200122", "YYYYMMDD"))) {
-    const leadingDay = moment(startDate, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
-    addFieldsExpression[`cases_${leadingDay}`] = {
-      $toInt: `$casesByDate.${leadingDay}.count`
-    };
-    addFieldsExpression[`deaths_${leadingDay}`] = {
-      $toInt: `$deathsByDate.${leadingDay}.count`
-    };
-    groupExpression[`${leadingDay}_cases`] = {
-      $sum: `$cases_${leadingDay}`
-    };
-    groupExpression[`${leadingDay}_deaths`] = {
-      $sum: `$deaths_${leadingDay}`
-    };
+  const movingAvgWindowSize = 5;
+
+  // in order to calculate the moving avg, we need to include dates preceding our selected date window
+  for (let k = 1; k < movingAvgWindowSize + 1; k++) {
+    if (moment(startDate, "YYYYMMDD").subtract(k, "day").isAfter(moment("20200122", "YYYYMMDD"))) {
+      const leadingDay = moment(startDate, "YYYYMMDD").subtract(k, "day").format("YYYYMMDD");
+      addFieldsExpression[`cases_${leadingDay}`] = {
+        $toInt: `$casesByDate.${leadingDay}.count`
+      };
+      addFieldsExpression[`deaths_${leadingDay}`] = {
+        $toInt: `$deathsByDate.${leadingDay}.count`
+      };
+      groupExpression[`${leadingDay}_cases`] = {
+        $sum: `$cases_${leadingDay}`
+      };
+      groupExpression[`${leadingDay}_deaths`] = {
+        $sum: `$deaths_${leadingDay}`
+      };
+    }
   }
 
+
+  // to each matched county, this first adds fields for each date for case count and death count
+  // then in the group phase, it sums the counties on those fields
+  // in the projection phase, a new array is made by date that includes an entry per date with summed case count and death count
+
   dateStrings.map((d, i) => {
+    const currentDate = moment(d, "YYYYMMDD")
     const precedingDay = moment(d, "YYYYMMDD").subtract(1, "day").format("YYYYMMDD");
+
+    let movingAverageExpressions = null;
+    if (moment(d, "YYYYMMDD").subtract(movingAvgWindowSize, "day").isAfter(moment("20200122", "YYYYMMDD"))) {
+      movingAverageExpressions = { cases: [], deaths: [] };
+      for (let j = 0; j < movingAvgWindowSize; j++) {
+        if (moment(d, "YYYYMMDD").subtract(j + 1, "day").isAfter(moment("20200122", "YYYYMMDD"))) {
+          movingAverageExpressions.cases.push({ $subtract: [`$${moment(d, "YYYYMMDD").subtract(j, "day").format("YYYYMMDD")}_cases`, `$${moment(d, "YYYYMMDD").subtract(j + 1, "day").format("YYYYMMDD")}_cases`] });
+          movingAverageExpressions.deaths.push({ $subtract: [`$${moment(d, "YYYYMMDD").subtract(j, "day").format("YYYYMMDD")}_deaths`, `$${moment(d, "YYYYMMDD").subtract(j + 1, "day").format("YYYYMMDD")}_deaths`] });
+        } else {
+          movingAverageExpressions.cases.push(`$${moment(d, "YYYYMMDD").subtract(j, "day").format("YYYYMMDD")}_cases`);
+          movingAverageExpressions.deaths.push(`$${moment(d, "YYYYMMDD").subtract(j, "day").format("YYYYMMDD")}_deaths`);
+        }
+
+      }
+    }
+
     addFieldsExpression[`cases_${d}`] = {
       $toInt: `$casesByDate.${d}.count`
     };
@@ -504,6 +528,9 @@ casesByCountySchema.statics.getTotals = async function (stateName = null, county
       cases: `$${d}_cases`,
       casesNew: {
         $subtract: [`$${d}_cases`, `$${precedingDay}_cases`]
+      },
+      casesNewMovingAvg: {
+        $avg: movingAverageExpressions ? movingAverageExpressions.cases : 0
       },
       casesRate: {
         $cond: [{
@@ -528,6 +555,9 @@ casesByCountySchema.statics.getTotals = async function (stateName = null, county
       deathsNew: {
         $subtract: [`$${d}_deaths`, `$${precedingDay}_deaths`]
       },
+      deathsNewMovingAvg: {
+        $avg: movingAverageExpressions ? movingAverageExpressions.deaths : 0
+      },
       deathsRate: {
         $cond: [{
           $eq: [
@@ -546,6 +576,23 @@ casesByCountySchema.statics.getTotals = async function (stateName = null, county
           ]
         }
         ]
+      },
+      mortalityRate: {
+        $cond: [
+          {
+            $eq: [
+              `$${d}_cases`, 0
+            ],
+          },
+          0,
+          {
+            $divide: [
+              `$${d}_deaths`,
+              `$${d}_cases`
+            ]
+          }
+        ]
+
       }
     }
   });

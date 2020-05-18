@@ -110,21 +110,21 @@ const getTotals = (state, county, start, end) => {
     })
 }
 
-const getByDate = (sort, dir, date) => {
-    return axios.get(`/api/stats/us/cases-by-county-date`, {
+const getSnapshot = (sort, dir, date) => {
+    return axios.get(`/api/stats/us/cases-by-county-snapshot`, {
         params: {
             sort,
             dir,
             date
         }
     }).then(res => {
-        dbg.log("statsServices::getByDate response", res);
+        dbg.log("statsServices::getSnapshot response", res);
 
         if (res.status === 200) {
             return res.data;
         }
     }).catch(error => {
-        dbg.log("statsServices::getByDate error", error);
+        dbg.log("statsServices::getSnapshot error", error);
         const err = Error("Stats error");
         err.data = error.response.data;
         throw err;
@@ -153,5 +153,5 @@ export const statsServices = {
     getCountiesSorted,
     getStatesSorted,
     getTotals,
-    getByDate
+    getSnapshot
 }

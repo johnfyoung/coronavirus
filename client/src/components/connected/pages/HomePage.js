@@ -26,13 +26,13 @@ class HomePage extends Component {
 
   componentDidMount() {
     dbg.log("Mounting Home page");
-    const { getStatesSorted, getTotals, getByDate } = this.props;
+    const { getStatesSorted, getTotals, getSnapshot } = this.props;
     const { sort, sortDirection, sortHotSpots, sortDirectionHotSpots } = this.state;
 
     getTotals().then(totalsResult => {
       dbg.log("Got the totals", totalsResult);
       this.setState({ totals: this.formatTotals(totalsResult) }, () => {
-        getByDate(sortHotSpots, sortDirectionHotSpots).then(countiesResult => {
+        getSnapshot(sortHotSpots, sortDirectionHotSpots).then(countiesResult => {
           this.setState({ sortedByDate: countiesResult }, () => {
             getStatesSorted(sort, sortDirection).then(result => {
               //dbg.log("Got the sortedStates data", result);
@@ -60,7 +60,8 @@ class HomePage extends Component {
         deaths: unFormattedData[k].deaths === 0 ? .0001 : unFormattedData[k].deaths,
         casesNew: unFormattedData[k].casesNew === 0 ? .0001 : unFormattedData[k].casesNew,
         casesMovingAvg: casesMovingAvg === 0 ? .0001 : casesMovingAvg,
-        deathsMovingAvg: deathsMovingAvg === 0 ? .0001 : deathsMovingAvg
+        deathsMovingAvg: deathsMovingAvg === 0 ? .0001 : deathsMovingAvg,
+        mortalityRate: (unFormattedData[k].mortalityRate * 100).toFixed(2)
       }
     });
   }
@@ -83,14 +84,14 @@ class HomePage extends Component {
 
   handleHotSpotsSortClick = (newSort, ev) => {
     ev.preventDefault();
-    const { getByDate } = this.props;
+    const { getSnapshot } = this.props;
     let { sortHotSpots, sortDirectionHotSpots } = this.state;
 
     if (sortHotSpots === newSort) {
       sortDirectionHotSpots = sortDirectionHotSpots === "desc" ? "asc" : "desc";
     }
 
-    getByDate(newSort, sortDirectionHotSpots).then(result => {
+    getSnapshot(newSort, sortDirectionHotSpots).then(result => {
       //dbg.log("Got the sortedStates data", result);
       this.setState({ sortHotSpots: newSort, sortDirectionHotSpots, sortedByDate: result });
     });
@@ -380,7 +381,7 @@ const mapStateToProps = ({ service, loading, stats }) => ({
 const actionCreators = {
   getStatesSorted: statsActions.getStatesSorted,
   getTotals: statsActions.getTotals,
-  getByDate: statsActions.getByDate
+  getSnapshot: statsActions.getSnapshot
 };
 
 export default connect(

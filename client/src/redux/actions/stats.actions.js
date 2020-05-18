@@ -152,11 +152,11 @@ const getTotals = (state, county, startDate, endDate) => {
     }
 }
 
-const getByDate = (sort, dir, date) => {
+const getSnapshot = (sort, dir, date) => {
     return dispatch => {
         dispatch({ type: serviceConstants.POSTBACK_BEGIN });
 
-        return statsServices.getByDate(sort, dir, date).then(data => {
+        return statsServices.getSnapshot(sort, dir, date).then(data => {
             dispatch({ type: statsConstants.STATS_GET_BYDATE, payload: data });
             dispatch({ type: statsConstants.STATS_SUCCESS });
             return data;
@@ -192,5 +192,5 @@ export const statsActions = {
     getLastUpdated,
     getStatesSorted,
     getTotals,
-    getByDate
+    getSnapshot
 };

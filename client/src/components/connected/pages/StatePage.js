@@ -48,7 +48,8 @@ class StatePage extends Component {
                 deaths: unFormattedData[k].deaths === 0 ? .0001 : unFormattedData[k].deaths,
                 casesNew: unFormattedData[k].casesNew === 0 ? .0001 : unFormattedData[k].casesNew,
                 casesMovingAvg: casesMovingAvg === 0 ? .0001 : casesMovingAvg,
-                deathsMovingAvg: deathsMovingAvg === 0 ? .0001 : deathsMovingAvg
+                deathsMovingAvg: deathsMovingAvg === 0 ? .0001 : deathsMovingAvg,
+                mortalityRate: (unFormattedData[k].mortalityRate * 100).toFixed(2)
             }
         });
     }
