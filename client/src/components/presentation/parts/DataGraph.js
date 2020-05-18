@@ -14,14 +14,16 @@ export default class DataGraph extends Component {
             let row = {};
             row.name = moment(date, "YYYYMMDD").format("MMM-DD");
             row.casesCount = parseInt(data.casesByDate[0][date]["count"]);
-            row.casesRate = data.casesByDate[0][date]["rate"] && !Number.isNaN(data.casesByDate[0][date]["rate"]) && data.casesByDate[0][date]["rate"] >= 0 ? parseFloat(data.casesByDate[0][date]["rate"]) : 0;
-            row.casesHarm = data.casesByDate[0][date]["harm"] && !Number.isNaN(data.casesByDate[0][date]["harm"]) && data.casesByDate[0][date]["harm"] >= 0 ? parseFloat(data.casesByDate[0][date]["harm"]) : 0;
+            row.newCases = parseInt(data.casesByDate[0][date]["new"]);
+            row.newMovingAvg = parseInt(data.casesByDate[0][date]["newMovingAvg"]);
+            row.casesRate = data.casesByDate[0][date]["rate"] && !Number.isNaN(data.casesByDate[0][date]["rate"]) && data.casesByDate[0][date]["rate"] >= 0 ? parseFloat(data.casesByDate[0][date]["rate"]) : .0001;
+            row.casesHarm = data.casesByDate[0][date]["harm"] && !Number.isNaN(data.casesByDate[0][date]["harm"]) && data.casesByDate[0][date]["harm"] >= 0 ? parseFloat(data.casesByDate[0][date]["harm"]) : .0001;
             row.casesSMA = data.casesByDate[0][date]["sma"] && !Number.isNaN(data.casesByDate[0][date]["sma"]) && data.casesByDate[0][date]["sma"] >= 0 ? parseFloat(data.casesByDate[0][date]["sma"]) : 0;
-            row.casesMov = data.casesByDate[0][date]["movingAvg"] && !Number.isNaN(data.casesByDate[0][date]["movingAvg"]) && data.casesByDate[0][date]["movingAvg"] >= 0 ? parseFloat(data.casesByDate[0][date]["movingAvg"]) : 0;
+            row.casesMov = data.casesByDate[0][date]["movingAvg"] && !Number.isNaN(data.casesByDate[0][date]["movingAvg"]) && data.casesByDate[0][date]["movingAvg"] >= 0 ? parseFloat(data.casesByDate[0][date]["movingAvg"]) : .0001;
 
             row.deathsCount = parseInt(data.deathsByDate[0][date]["count"]);
-            row.fatalityRate = row.deathsCount > 0 && row.casesCount > 0 ? row.deathsCount / row.casesCount : 0
-            row.deathsHarm = data.deathsByDate[0][date]["harm"] && !Number.isNaN(data.deathsByDate[0][date]["harm"]) && data.deathsByDate[0][date]["harm"] >= 0 ? parseFloat(data.deathsByDate[0][date]["harm"]) : 0;
+            row.mortalityRate = row.deathsCount > 0 && row.casesCount > 0 ? ((row.deathsCount / row.casesCount) * 100).toFixed(2) : .0001
+            row.deathsHarm = data.deathsByDate[0][date]["harm"] && !Number.isNaN(data.deathsByDate[0][date]["harm"]) && data.deathsByDate[0][date]["harm"] >= 0 ? parseFloat(data.deathsByDate[0][date]["harm"]) : .0001;
 
             reformattedData.push(row);
         });
@@ -35,7 +37,6 @@ export default class DataGraph extends Component {
 
         return (
             <div>
-                <h2>Cases count</h2>
                 <ResponsiveContainer width="100%" height={500}>
                     <LineChart
                         data={formattedData}
@@ -45,31 +46,15 @@ export default class DataGraph extends Component {
                     >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
-                        <YAxis type="number" yAxisId="left" orientation="left" domain={['dataMin', 'dataMax']} interval={"preserveStartEnd"} />
-                        <YAxis type="number" yAxisId="right" orientation="right" domain={[0, .2]} allowDataOverflow={true} />
+                        <YAxis type="number" yAxisId="left" orientation="left" scale="log" domain={[1, 'dataMax']} allowDataOverflow={true} />
+                        <YAxis type="number" yAxisId="right" orientation="right" scale="log" domain={[1, 20]} allowDataOverflow={true} />
                         <Tooltip />
                         <Legend />
                         <Line type="monotone" yAxisId="left" dataKey="casesCount" stroke="#8884d8" dot={false} activeDot={{ r: 8 }} />
                         <Line type="monotone" yAxisId="left" dataKey="deathsCount" stroke="#82ca9d" dot={false} />
-                        <Line type="monotone" yAxisId="right" dataKey="fatalityRate" stroke="#FF0000" dot={false} />
-                    </LineChart>
-                </ResponsiveContainer>
-                <h2>Cases rate of change</h2>
-                <ResponsiveContainer width="100%" height={500}>
-                    <LineChart
-                        data={formattedData}
-                        margin={{
-                            top: 5, right: 30, left: 20, bottom: 5,
-                        }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis type="number" yAxisId="left" orientation="left" domain={[0, 1]} allowDataOverflow={true} />
-                        <Tooltip />
-                        <Legend />
-                        <Brush />
-                        <Line type="monotone" yAxisId="left" dataKey="casesRate" stroke="#cccccc" dot={false} activeDot={{ r: 8 }} />
-                        <Line type="monotone" yAxisId="left" dataKey="casesMov" stroke="#c4355d" dot={false} activeDot={{ r: 8 }} />
+                        <Line type="monotone" yAxisId="left" dataKey="newCases" stroke="#dddddd" dot={false} />
+                        <Line type="monotone" yAxisId="left" dataKey="newMovingAvg" stroke="#00dddd" dot={false} activeDot={{ r: 8 }} />
+                        <Line type="monotone" yAxisId="right" dataKey="mortalityRate" stroke="#FF0000" dot={false} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
