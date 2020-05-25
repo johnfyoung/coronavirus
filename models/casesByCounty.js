@@ -822,7 +822,7 @@ casesByCountySchema.statics.formatDataPull = dataObj => {
 
           sumOfRates += rate;
           data[regionID][dataObj[key].type].byDate[dateKey] = {
-            count: dataByDate[i],
+            count: parseInt(dataByDate[i]),
             rate,
             sma: sumOfRates / (i + 1),
             harm: nonZeroRates.length > 0 ? harmonicMean(nonZeroRates) : 0,
