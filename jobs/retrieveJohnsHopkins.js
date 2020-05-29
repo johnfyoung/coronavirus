@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { dbg, logJob, logError } from "../util/tools";
 
 require("dotenv").config();
-mongoose.set({ useUnifiedTopology: true });
+mongoose.set("useUnifiedTopology", true);
 
 mongoose
   .connect(process.env.MONGODB_URI, {
