@@ -127,7 +127,7 @@ export const statsController = {
   getLatestDataDump: async (dumpName) => {
     return await DataPull.findLatest(dumpName);
   },
-  retrieveJohnsHopkins: async () => {
+  retrieveJohnsHopkins: async (force = false) => {
     const lastUpdated = await johnsHopkinsGetLatestUpdateTime();
     //dbg("Last Updated:", lastUpdated);
     let result = {
@@ -137,15 +137,16 @@ export const statsController = {
       },
     };
 
-    const newDataPull = null;
+    let newDataPull = null;
     try {
       if (
-        lastUpdated &&
-        (await DataPull.isNew(lastUpdated, dataPullNames.JOHNSHOPKINS))
+        (lastUpdated &&
+          (await DataPull.isNew(lastUpdated, dataPullNames.JOHNSHOPKINS))) ||
+        force
       ) {
         result.meta = {
           status: 1,
-          message: "New data",
+          message: force ? "Forcing data pull" : "New data",
         };
 
         result.data = await johnsHopkinsRetrieveData();
