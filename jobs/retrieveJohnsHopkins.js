@@ -1,21 +1,24 @@
 import { statsController } from "../controllers";
 import mongoose from "mongoose";
-import { dbg, logJob } from "../util/tools";
+import { dbg, logJob, logError } from "../util/tools";
 
 require("dotenv").config();
+mongoose.set({ useUnifiedTopology: true });
 
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useCreateIndex: true,
-    useUnifiedTopology: true
   })
   .then(async () => {
     dbg("MongoDB connected");
     const result = await statsController.retrieveJohnsHopkins();
-    logJob(`Job completed: ${result.meta.message}`, "retrieveJohnsHopkins").then(() => {
+    logJob(
+      `Job completed: ${result.meta.message}`,
+      "retrieveJohnsHopkins"
+    ).then(() => {
       mongoose.disconnect();
       process.exit();
     });
   })
-  .catch(err => console.log(err));
+  .catch((err) => logError(`retrieveJohnsHopkins:: error - ${err}`));

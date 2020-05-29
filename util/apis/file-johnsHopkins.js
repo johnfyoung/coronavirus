@@ -14,23 +14,25 @@ const githubAPIPath =
 
 // Filenames as they are in the github repo
 const remoteFiles = {
-  intl: {
-    "time_series_covid19_confirmed_global.csv": {
-      type: "cases",
-      path: "csse_covid_19_time_series",
-      file: "time_series_covid19_confirmed_global.csv"
-    },
-    "time_series_covid19_deaths_global.csv": {
-      type: "deaths",
-      path: "csse_covid_19_time_series",
-      file: "time_series_covid19_deaths_global.csv",
-    },
-    "time_series_covid19_recovered_global.csv": {
-      type: "recovered",
-      path: "csse_covid_19_time_series",
-      file: "time_series_covid19_recovered_global.csv",
-    },
-  },
+  // 2020-05-29 NOTE: this data is currently not represented on the site
+  // to speed data collection it has been paused
+  // intl: {
+  //   "time_series_covid19_confirmed_global.csv": {
+  //     type: "cases",
+  //     path: "csse_covid_19_time_series",
+  //     file: "time_series_covid19_confirmed_global.csv",
+  //   },
+  //   "time_series_covid19_deaths_global.csv": {
+  //     type: "deaths",
+  //     path: "csse_covid_19_time_series",
+  //     file: "time_series_covid19_deaths_global.csv",
+  //   },
+  //   "time_series_covid19_recovered_global.csv": {
+  //     type: "recovered",
+  //     path: "csse_covid_19_time_series",
+  //     file: "time_series_covid19_recovered_global.csv",
+  //   },
+  // },
   us: {
     "time_series_covid19_confirmed_US.csv": {
       type: "cases",
@@ -85,25 +87,22 @@ export const johnsHopkinsRetrieveData = async () => {
     for (const key of Object.keys(remoteFiles)) {
       result[key] = {};
       for (const filename of Object.keys(remoteFiles[key])) {
-
         const url = `${dataRootPath}${remoteFiles[key][filename].sha}`;
 
-        const response = await axios.get(
-          url,
-          {
-            headers: {
-              Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN,
-            },
-          }
-        );
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: "token " + process.env.GITHUB_ACCESS_TOKEN,
+          },
+        });
 
-        const buffer = Buffer.from(response.data.content, response.data.encoding);
+        const buffer = Buffer.from(
+          response.data.content,
+          response.data.encoding
+        );
         result[key][filename] = {
           type: remoteFiles[key][filename].type,
         };
-        result[key][filename].data = await csvParse.parse(
-          buffer.toString()
-        );
+        result[key][filename].data = await csvParse.parse(buffer.toString());
       }
     }
   } catch (err) {
@@ -120,10 +119,10 @@ export const getCurrentFileSHA = async (fileList) => {
     const fileMeta = await axios.get(`${csvRootPath}`);
     //dbg('fileMeta', fileMeta);
 
-    fileMeta.data.map(file => {
+    fileMeta.data.map((file) => {
       for (const key of Object.keys(fileList)) {
         if (fileList[key][file.name]) {
-          fileList[key][file.name].sha = file.sha
+          fileList[key][file.name].sha = file.sha;
         }
       }
     });
@@ -134,4 +133,4 @@ export const getCurrentFileSHA = async (fileList) => {
       `file-johnHopkins::johnsHopkinsRetrieveData::Error retrieving sha for files: ${err}`
     );
   }
-}
+};
