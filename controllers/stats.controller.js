@@ -4,13 +4,9 @@ import moment from "moment";
 
 import {
   johnsHopkinsRetrieveData,
-  johnsHopkinsGetLatestUpdateTime
+  johnsHopkinsGetLatestUpdateTime,
 } from "../util/apis/file-johnsHopkins";
-import {
-  CasesByCounty,
-  DataPull,
-  CasesByRegion
-} from "../models";
+import { CasesByCounty, DataPull, CasesByRegion } from "../models";
 
 export const statsController = {
   // DEPRECATED: the RapidApi one didn't ave the
@@ -26,7 +22,7 @@ export const statsController = {
     try {
       return await CasesByRegion.aggregate([
         { $match: countryFilter },
-        { $sort: { country: 1 } }
+        { $sort: { country: 1 } },
       ]);
     } catch (err) {
       logError(
@@ -37,12 +33,16 @@ export const statsController = {
     return null;
   },
   getCasesByCounty: async (stateName = null, countyName = null) => {
-    let filter = stateName ? { state: { $regex: stateName, $options: "i" } } : {};
-    filter = countyName ? { ...filter, county: { $regex: countyName, $options: "i" } } : filter;
+    let filter = stateName
+      ? { state: { $regex: stateName, $options: "i" } }
+      : {};
+    filter = countyName
+      ? { ...filter, county: { $regex: countyName, $options: "i" } }
+      : filter;
     try {
       return await CasesByCounty.aggregate([
         { $match: filter },
-        { $sort: { state: 1, county: 1 } }
+        { $sort: { state: 1, county: 1 } },
       ]);
     } catch (err) {
       logError(
@@ -53,17 +53,17 @@ export const statsController = {
     return null;
   },
   getCountyList: async (stateName = null) => {
-    const filter = stateName ? { state: { $regex: stateName, $options: "i" } } : {};
+    const filter = stateName
+      ? { state: { $regex: stateName, $options: "i" } }
+      : {};
     try {
       return await CasesByCounty.aggregate([
         { $match: filter },
         { $sort: { state: 1, county: 1 } },
-        { $project: { county: true } }
+        { $project: { county: true } },
       ]);
     } catch (err) {
-      logError(
-        `statsController::getCountyList::Error aggregating data ${err}`
-      );
+      logError(`statsController::getCountyList::Error aggregating data ${err}`);
     }
 
     return null;
@@ -90,9 +90,7 @@ export const statsController = {
     try {
       return await CasesByCounty.distinct("state");
     } catch (err) {
-      logError(
-        `statsController::getCountyList::Error aggregating data ${err}`
-      );
+      logError(`statsController::getCountyList::Error aggregating data ${err}`);
     }
 
     return null;
@@ -102,7 +100,7 @@ export const statsController = {
     try {
       return await CasesByCounty.aggregate([
         { $match: filter },
-        { $sort: { state: 1, county: 1 } }
+        { $sort: { state: 1, county: 1 } },
       ]);
     } catch (err) {
       logError(
@@ -116,14 +114,14 @@ export const statsController = {
     try {
       return CasesByCounty.getTotals(stateName, countyName, startDate, endDate);
     } catch (err) {
-      `statsController::getTotals::Error aggregating data ${err}`
+      `statsController::getTotals::Error aggregating data ${err}`;
     }
   },
   getSnapshot: async (sort, dir, date) => {
     try {
       return CasesByCounty.getSnapshot(sort, dir, date);
     } catch (err) {
-      `statsController::getByDate::Error aggregating data ${err}`
+      `statsController::getByDate::Error aggregating data ${err}`;
     }
   },
   getLatestDataDump: async (dumpName) => {
@@ -135,9 +133,11 @@ export const statsController = {
     let result = {
       meta: {
         status: 0,
-        message: "No new data"
-      }
+        message: "No new data",
+      },
     };
+
+    const newDataPull = null;
     try {
       if (
         lastUpdated &&
@@ -145,31 +145,33 @@ export const statsController = {
       ) {
         result.meta = {
           status: 1,
-          message: "New data"
-        }
+          message: "New data",
+        };
 
         result.data = await johnsHopkinsRetrieveData();
 
-        const newDataPull = new DataPull({
+        newDataPull = new DataPull({
           name: dataPullNames.JOHNSHOPKINS,
-          pullTime: lastUpdated
+          pullTime: lastUpdated,
         });
 
-        await newDataPull.save(function (err) {
+        await newDataPull.save(function(err) {
           if (err) {
             logError(`Error saving DataPull: ${err}`);
           }
         });
 
-        await CasesByRegion.updateFromDataPull(result.data.intl);
+        // 2020-05-29 NOTE: since this data is not being displayed, this is disabled
+        // await CasesByRegion.updateFromDataPull(result.data.intl);
         await CasesByCounty.updateFromDataPull(result.data.us, newDataPull);
       }
     } catch (err) {
+      DataPull.deleteOne(newDataPull);
       logError(
         `statsController::retrieveJohnsHopkins: Could not retrieve the files from Johns Hopkins - ${err}`
       );
     }
 
     return result;
-  }
+  },
 };
