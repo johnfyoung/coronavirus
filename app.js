@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import path from "path";
 import cookieParser from "cookie-parser";
 import useragent from "express-useragent";
+import compression from "compression";
 
 import { dbg } from "./util/tools";
 
@@ -13,6 +14,7 @@ require("dotenv").config();
 // Get an Express app
 const app = express();
 app.use(useragent.express());
+app.use(compression());
 
 // Body parsing
 app.use(express.json());
