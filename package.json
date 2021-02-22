@@ -8,15 +8,9 @@
   "scripts": {
     "start": "if-env NODE_ENV=production && npm run start:prod || npm run start:dev",
     "start:prod": "npm run server",
-    "start:dev": "concurrently \"nodemon --ignore 'client/*' --exec npm run server\" \"npm run client\"",
+    "start:dev": "npm run server",
     "server": "babel-node server.js",
-    "client": "AUTHOR=$(node -p \"require('./package.json').author\") && APP_NAME=$(node -p \"require('./package.json').displayName\") && cd client && env REACT_APP_NAME=\"$APP_NAME\" REACT_APP_AUTHOR=\"$AUTHOR\" REACT_APP_GA=\"UA-0000000-00\" npm run start",
-    "install": "npm install --prefix ./client",
-    "build": "GA=$(node -p \"require('./package.json').googleAnalytics\") && AUTHOR=$(node -p \"require('./package.json').author\") && APP_NAME=$(node -p \"require('./package.json').displayName\") && cd client && env REACT_APP_NAME=\"$APP_NAME\" REACT_APP_AUTHOR=\"$AUTHOR\" REACT_APP_GA=\"$GA\" npm run build",
-    "heroku-postbuild": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "getName": "node -p \"require('./package.json').name\"",
-    "getDisplayName": "node -p \"require('./package.json').displayName\""
+    "install": "npm install"
   },
   "engines": {
     "node": ">=12.16.2"
