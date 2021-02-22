@@ -12,12 +12,12 @@ exports.handler = async (event) => {
 
     response = {
       statusCode: 200,
-      body: JSON.stringify({ stdout: `${stdout}`, stderr: `${stderr}` }),
+      body: { stdout: `${stdout}`, stderr: `${stderr}` },
     };
   } catch (err) {
     response = {
       statusCode: 503,
-      body: JSON.stringify({ err: `${err}` }),
+      body: { err: `${err}` },
     };
   }
 
