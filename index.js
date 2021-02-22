@@ -4,11 +4,11 @@ const exec = util.promisify(require("child_process").exec);
 exports.handler = async (event) => {
   let response = {};
   try {
-    // const { stdout, stderr } = await exec(
-    //   "npx babel-node jobs/retrieveJohnsHopkins.js"
-    // );
+    const { stdout, stderr } = await exec(
+      "node ./node_modules/@babel/node/bin/babel-node jobs/retrieveJohnsHopkins.js"
+    );
 
-    const { stdout, stderr } = await exec("ls -la");
+    //const { stdout, stderr } = await exec("ls -la");
 
     response = {
       statusCode: 200,
