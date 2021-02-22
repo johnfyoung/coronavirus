@@ -6,6 +6,7 @@ import ConnectedPage from "../../connected/templates/ConnectedPage";
 import DataGraph from "../../presentation/parts/DataGraph";
 import { dbg, history } from "../../../utils";
 import { statsActions } from "../../../redux/actions";
+import axios from "axios";
 
 const Parser = require("rss-parser");
 
@@ -25,10 +26,14 @@ class GraphPage extends Component {
     this.props.getCasesByCounty(state, county).then((data) => {
       if (data.length > 0) {
         this.setState({ data: data[0] }, async () => {
-          const newsResult = await rssParser.parseURL(newsURL);
-
-          dbg.log("News result", newsResult);
-          this.setState({ news: newsResult.items });
+          try {
+            const newsResult = axios.get(newsURL);
+            //const newsResult = await rssParser.parseURL(newsURL);
+            dbg.log("News result", newsResult);
+            this.setState({ news: newsResult.items });
+          } catch (err) {
+            dbg.log("News result err", err);
+          }
         });
       }
     });
